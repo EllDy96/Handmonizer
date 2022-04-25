@@ -1,6 +1,6 @@
 
-
 Server.killAll
+
 
 
 ( //#1 ======INITIALIZE SC SERVER ======
@@ -8,14 +8,16 @@ Server.killAll
 o = Server.local.options;
 o.sampleRate = 44100;
 o.blockSize = 512;
-o.inDevice = nil; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
-o.outDevice = nil; //use system default audio output (change value to manually configure output)
+o.inDevice = "IN 3-4 (3- BEHRINGER UMC 404HD "; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
+o.outDevice ="MME : OUT 1-2 (3- BEHRINGER UMC 404HD" ;//"OUT 3-4 (4- BEHRINGER UMC 404HD "; //use system default audio output (change value to manually configure output)
 s.latency = 0.05; //0.2 is SC default
 s.boot;
 )
 
 ServerOptions.devices;
-
+o.inDevice = "MME : Gruppo microfoni (Realtek High";
+o.outDevice= "OUT 3-4 (3- BEHRINGER UMC 404HD"
+s.boot;
 (
 s.scope;// plotting the wave in time domain
 FreqScope.new // ploting the spectogram
@@ -58,7 +60,7 @@ FreqScope.new // ploting the spectogram
 
 )
 
-// Voice tracking & harmonization
+// Voice tracking & harmonization"C:/Users/david/GitHubRepos/myksupercollider/scooterworks_finn_2008_sc/loops.sc"
 
 (
 
@@ -81,11 +83,11 @@ SynthDef.new(\voiceTracker, {
 }).send(s);
 
 // the synth which computes the harmonizations with the use of buffers, modified by the GUI
-SynthDef.new(\harmonizerGUI,{
+ SynthDef.new(\harmonizerGUI,{
     |
-    inputBus, inFreqBus, numVoices = 0
+    inputBus, inFreqBus, numVoices = 1
 	buffer1, buffer2, buffer3
-    voiceOutBus, harmonicsOutBus, gain = 1
+    voiceOutBus, harmonicsOutBus, gain = 5
     |
 
 	var in = In.ar(inputBus, 1);//read the input buss
@@ -100,7 +102,7 @@ SynthDef.new(\harmonizerGUI,{
 
     // the shift quantities used to compute the new pitch shifted harmonies
 
-	par = Array2D.new;
+	par = Array.new;
 
 	shift1 = WrapIndex.kr(buffer1, fundamental);
 	shift2 = WrapIndex.kr(buffer2, fundamental);
@@ -127,6 +129,7 @@ SynthDef.new(\harmonizerGUI,{
     ];
 
 	par = [partials, partials2, partials3];
+	postln(par[2]);
 	/*numVoices.do({
 		shift = WrapIndex.kr(buffer1, fundamental);
 		partials = partials.add(0.5*shift);
@@ -134,9 +137,10 @@ SynthDef.new(\harmonizerGUI,{
 	})*/
 
     // split two cases: main voice (uneffected and harmonies)
-	voice = Mix.new(PitchShift.ar(in, 0.2, [0.5,1], 0, 0.004)); //A time domain granular pitch shifter. Grains have a triangular amplitude envelope and an overlap of 4:1, and use linear interpolation of the buffer.
-	harmonics = 2 * gain * PitchShift.ar(in, 0.2, par[0], 0, 0.004);
-
+	voice = Mix.new(PitchShift.ar(in, 0.2, 1, 0, 0.004)); //A time domain granular pitch shifter. Grains have a triangular amplitude envelope and an overlap of 4:1, and use linear interpolation of the buffer.
+	harmonics = PitchShift.ar(in, 0.2, par[2], 0, 0.004,gain);
+	//println(par[2]);
+	//postln(numVoices.type);
 	Out.ar(voiceOutBus, voice);
 	Out.ar(harmonicsOutBus, harmonics);
 }).send(s);
@@ -190,7 +194,6 @@ SynthDef.new(\reverbEffect, {
 
 
 
-
 (
 
 // create the busses
@@ -209,14 +212,18 @@ SynthDef.new(\reverbEffect, {
 // Create the groups
 ~inputGroup = Group.new;
 ~harmonizerGroup = Group.after(~inputGroup);
-~effectsGroup = Group.after(~harmonizerGroup);
-~outputGroup = Group.after(~effetcsGroup);
+
+~outputGroup = Group.after(~harmonizerGroup);
+// uncomment this to add the effects bus
+//~effectsGroup = Group.after(~harmonizerGroup);
+//~outputGroup = Group.after(~effetcsGroup);
+
 
 // instances of the various model Synth
 ~harmonizer = Synth.new(\harmonizerGUI, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \voiceOutBus, ~finalBus, \harmonicsOutBus, ~harmonizerOut, \buffer1, ~diffbuf.bufnum, \buffer2, ~diffbuf2.bufnum, \buffer3, ~diffbuf3.bufnum ], ~harmonizerGroup );
 
 //instance of the effect
-~rev = Synth.after(~harmonizer, \reverbEffect, [\inputBus, ~revIn, \outputBus, ~dlIn], ~effectsGroup);
+//~rev = Synth.after(~harmonizer, \reverbEffect, [\inputBus, ~revIn, \outputBus, ~dlIn], ~effectsGroup);
 
 
 ~finalSum = Synth.new(\finalSum, [\inputBus, ~finalBus], ~outputGroup);
@@ -239,7 +246,7 @@ OSCdef('OSCreceiver',
 
 
 		x_map= LinLin.ar(x,0,1,0,1);// mapping the feedback
-        y_map= LinLin.ar(y,0,1,0,2); // mapping of the index (increase the modulation amplitude)
+        y_map= LinLin.ar(y,0,1,0,2).round.asInteger; // mapping of the index (increase the modulation amplitude)
         z_map= LinLin.ar(z, 0, 1, 20,2000);// mapping of the cut off lpf
 		k_map= LinLin.ar(k,0,1,0,10); //  mapping of the Reverb amount
 
@@ -262,4 +269,5 @@ OSCdef('OSCreceiver',
 
 ~finalSum.set(\gain,0.5);
 ~harmonizer.set(\numVoices,1);
+~harmonizer.set(\gain,0);
 ~rev.set(\wetR, -5);
