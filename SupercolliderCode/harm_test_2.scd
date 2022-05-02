@@ -56,8 +56,8 @@ FreqScope.new // ploting the spectogram
 
 ~diffbuf.postln;
 
-//~pitchRatioControlBuses = Array.fill(1, {arg i; Bus.control(s, 1)});
-~pitchRatioControlBuses = Bus.control(s, 1);
+~pitchRatioControlBuses = Array.fill(1, {arg i; Bus.control(s, 1)});
+//~pitchRatioControlBuses = Bus.control(s, 1);
 
 
 )
@@ -77,7 +77,7 @@ SynthDef.new(\voiceTracker, {
 	amp = Amplitude.kr(in, 0.05, 0.01, 1);
     # freq, hasFreq = Pitch.kr(in);
 
-    Out.kr(outFreqBus, freq);
+    //Out.kr(outFreqBus, freq);
 	Out.ar(outputBus, in);
 }).send(s);
 
@@ -88,6 +88,7 @@ SynthDef.new(\harmonizer, {
     outHarmBus, outVoiceBus
 	buffer1, buffer2, buffer3
 	amp = 1, amp1 = 1, amp2 = 1, amp3 = 1
+	pitch = 0
 	|
 
 	var in = In.ar(inputBus, 1);
@@ -95,7 +96,7 @@ SynthDef.new(\harmonizer, {
     var shift1, shift2, shift3;
 	var fundamental, inFreq, out;
 	var h1, h2, h3;
-	var pitchRatio = In.kr(~pitchRatioControlBuses, 1);
+	var pitchRatio = In.kr(~pitchRatioControlBuses[0], 1);
 
 	//fundamental = inFreqBus.cpsmidi.round(1);
 
@@ -103,7 +104,7 @@ SynthDef.new(\harmonizer, {
 	//shift2 = WrapIndex.kr(buffer2.midicps.round(1),fundamental);
 	//shift3 = WrapIndex.kr(buffer3.midicps.round(1),fundamental);
 
-	h1 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitchRatio), 0.0, 0.0, amp1);
+	h1 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitch), 0.0, 0.0, amp1);
 	//h2 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitchRatio), 0.0, 0.0, amp2);
 	//h3 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitchRatio), 0.0, 0.0, amp3);
 
@@ -180,7 +181,7 @@ OSCdef('OSCreceiver',
 		k = msg[4];// palm slope   -> Reverb amount->the square magnitude
 
 
-		x_map= LinLin.ar(x,0,1,0,2);// mapping the feedback
+		x_map= LinLin.ar(x,0,1,-12,12).round.asInteger;// mapping the feedback
         y_map= LinLin.ar(y,0,1,0,2); // mapping of the index (increase the modulation amplitude)
         z_map= LinLin.ar(z, 0, 1, 20,2000);// mapping of the cut off lpf
 		k_map= LinLin.ar(k,0,1,0,10); //  mapping of the Reverb amount
@@ -203,7 +204,8 @@ OSCdef('OSCreceiver',
 				}
 		));   */
 
-		~harmonizer.set(\amp, x_map, \amp1, y_map);
+		//~harmonizer.set(\amp, x_map, \amp1, y_map);
+		~harmonizer.set(\pitch, x_map);
 
         //Printing the OSC values:
 		postln("Tracking parameter: x : "+ x +" - y : "+ y + " - z: "+ z + "palm slope: " + k);
@@ -223,7 +225,7 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 					bounds: Rect(85, 20, 300, 20),
 					label: "P.R.",
 					controlSpec: ControlSpec(minval: -12, maxval: 12, warp: \lin, step: 1, units: \semitones),
-					action: {arg thisSlider; ~pitchRatioControlBuses.set(thisSlider.value)},
+	                action: {arg thisSlider; ~pitchRatioControlBuses[0].set(thisSlider.value)},
 					initVal: 0,
 					initAction: true,
 					labelWidth: 60,
@@ -236,7 +238,7 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 ~b1.string = "ON";
 ~b1.action_({
 
-    ~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut, \outFreqBus, ~fundamentalBus], ~inputGroup);
+    ~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut], ~inputGroup);
 
 });
 
@@ -256,7 +258,7 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 
 
 
-~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut, \outFreqBus, ~fundamentalBus], ~inputGroup);
+~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut], ~inputGroup);
 ~voiceTracker.run(true);
 ~voicetracker.run(false);
 ~voiceTracker.set(\gain, 1);
