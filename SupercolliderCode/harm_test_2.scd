@@ -87,7 +87,7 @@ SynthDef.new(\harmonizer, {
     outHarmBus, outVoiceBus
 	buffer1, buffer2, buffer3
 	amp = 1, amp1 = 1, amp2 = 1, amp3 = 1, amph = 1
-	pitch1 = 0, pitch2 = 0, pitch3 = 12
+	pitch1 = 4, pitch2 = 7, pitch3 = 12
 	|
 
 	var in = In.ar(inputBus, 1);
@@ -105,9 +105,9 @@ SynthDef.new(\harmonizer, {
 
 	h1 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitch1), 0.0, 0.0, amp1);
 	h2 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitch2), 0.0, 0.0, amp2);
-	//h3 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitch3), 0.0, 0.0, amp3);
+	h3 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitch3), 0.0, 0.0, amp3);
 
-	harmonics = Mix.new([amp1*h1, amp2*h2]);
+	harmonics = Mix.new([amp1*h1, amp2*h2, amp3*h3]);
 	harmonics = amph * harmonics;
 
     Out.ar(outVoiceBus, in);
@@ -181,15 +181,15 @@ OSCdef('OSCreceiver',
 		k = msg[4];// palm slope   -> Reverb amount->the square magnitude
 
 
-		x_map = LinLin.ar(x,0,1,-12,12).round.asInteger;// mapping the feedback
-        y_map = LinLin.ar(y,0,1,-12,12).round.asInteger; // mapping of the index (increase the modulation amplitude)
+		x_map = LinLin.ar(x,0,1,0,3).round.asInteger;// mapping the feedback
+        y_map = LinLin.ar(y,0,1,0,3).round.asInteger; // mapping of the index (increase the modulation amplitude)
         z_map = LinLin.ar(z, 0, 1, 0, 1);// mapping of the cut off lpf
 		k_map = LinLin.ar(k,0,1,0,10); //  mapping of the Reverb amount
 
 		//~finalSum.set(\gain,x_map);
 		//~harmonizer.set(\numVoices,y_map);
 		//~rev.set(\wetR, x_map);
-        /*
+
 		if ( x_map < 1 ,
 			{
 				~harmonizer.set(\amp3, 0, \amp2, 0, \amp1, 1);
@@ -202,11 +202,17 @@ OSCdef('OSCreceiver',
 					~harmonizer.set(\amp3, 1, \amp2, 1, \amp1, 1);
 					~harmonizer.postln;
 				}
-		)); */
+		));
 
 		//~harmonizer.set(\amp, x_map, \amp1, y_map);
-		~harmonizer.set(\pitch1, x_map, \pitch2, y_map);
-		~harmonizer.set(\amph, z_map);
+		//~harmonizer.set(\pitch1, x_map, \pitch2, y_map);
+
+		if ( z_map < 0.5, {
+			~harmonizer.set(\amph, 0);
+		}, {
+			~harmonizer.set(\amph, 1);
+		});
+
 
 
         //Printing the OSC values:
