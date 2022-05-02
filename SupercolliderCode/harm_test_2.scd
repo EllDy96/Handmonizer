@@ -131,7 +131,7 @@ SynthDef.new(\finalSum, {
 
     //out = AllpassN.ar(input, 0.040, [0.040.rand, 0.040.rand], 2);
 
-	Out.ar(outputBus, out);
+	Out.ar([0,1], out);
 }).send(s);
 
 )
@@ -160,10 +160,6 @@ SynthDef.new(\finalSum, {
 
 ~finalSum = Synth.new(\finalSum, [\inputVoiceBus, ~harmonizerVoice, \inputHarmBus, ~harmonizerHarm], ~outputGroup);
 )
-
-
-///// GUI //////
-
 
 
 (
