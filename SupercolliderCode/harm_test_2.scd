@@ -33,7 +33,6 @@ FreqScope.new // ploting the spectogram
 ~mapped2 = Array.fill(12, {arg i; i + 67});//the fifth
 ~mapped3 = Array.fill(12, {arg i; i + 71});//the octave
 
-
 ~midiON = 0;
 
 // define a table to store the difference between reference and mapped note
@@ -87,8 +86,8 @@ SynthDef.new(\harmonizer, {
 	inputBus, inFreqBus
     outHarmBus, outVoiceBus
 	buffer1, buffer2, buffer3
-	amp = 1, amp1 = 1, amp2 = 1, amp3 = 1
-	pitch = 0
+	amp = 1, amp1 = 1, amp2 = 1, amp3 = 1, amph = 1
+	pitch1 = 0, pitch2 = 0, pitch3 = 12
 	|
 
 	var in = In.ar(inputBus, 1);
@@ -104,14 +103,15 @@ SynthDef.new(\harmonizer, {
 	//shift2 = WrapIndex.kr(buffer2.midicps.round(1),fundamental);
 	//shift3 = WrapIndex.kr(buffer3.midicps.round(1),fundamental);
 
-	h1 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitch), 0.0, 0.0, amp1);
-	//h2 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitchRatio), 0.0, 0.0, amp2);
-	//h3 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitchRatio), 0.0, 0.0, amp3);
+	h1 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitch1), 0.0, 0.0, amp1);
+	h2 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitch2), 0.0, 0.0, amp2);
+	//h3 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitch3), 0.0, 0.0, amp3);
 
-	//harmonics = Mix.new([amp1*h1, amp2*h2, amp3*h3]);
+	harmonics = Mix.new([amp1*h1, amp2*h2]);
+	harmonics = amph * harmonics;
 
-    Out.ar(outVoiceBus, amp*in);
-	Out.ar(outHarmBus, amp1*h1);
+    Out.ar(outVoiceBus, in);
+	Out.ar(outHarmBus, harmonics);
 }).send(s);
 
 
@@ -181,10 +181,10 @@ OSCdef('OSCreceiver',
 		k = msg[4];// palm slope   -> Reverb amount->the square magnitude
 
 
-		x_map= LinLin.ar(x,0,1,-12,12).round.asInteger;// mapping the feedback
-        y_map= LinLin.ar(y,0,1,0,2); // mapping of the index (increase the modulation amplitude)
-        z_map= LinLin.ar(z, 0, 1, 20,2000);// mapping of the cut off lpf
-		k_map= LinLin.ar(k,0,1,0,10); //  mapping of the Reverb amount
+		x_map = LinLin.ar(x,0,1,-12,12).round.asInteger;// mapping the feedback
+        y_map = LinLin.ar(y,0,1,-12,12).round.asInteger; // mapping of the index (increase the modulation amplitude)
+        z_map = LinLin.ar(z, 0, 1, 0, 1);// mapping of the cut off lpf
+		k_map = LinLin.ar(k,0,1,0,10); //  mapping of the Reverb amount
 
 		//~finalSum.set(\gain,x_map);
 		//~harmonizer.set(\numVoices,y_map);
@@ -202,10 +202,12 @@ OSCdef('OSCreceiver',
 					~harmonizer.set(\amp3, 1, \amp2, 1, \amp1, 1);
 					~harmonizer.postln;
 				}
-		));   */
+		)); */
 
 		//~harmonizer.set(\amp, x_map, \amp1, y_map);
-		~harmonizer.set(\pitch, x_map);
+		~harmonizer.set(\pitch1, x_map, \pitch2, y_map);
+		~harmonizer.set(\amph, z_map);
+
 
         //Printing the OSC values:
 		postln("Tracking parameter: x : "+ x +" - y : "+ y + " - z: "+ z + "palm slope: " + k);
