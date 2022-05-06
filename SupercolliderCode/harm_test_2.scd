@@ -20,7 +20,6 @@ s.scope;// plotting the wave in time domain
 FreqScope.new // ploting the spectogram
 )
 
-
 ///////////////////////////////////// MODEL ////////////////////////////////////////////////////
 
 (
@@ -74,9 +73,9 @@ SynthDef.new(\voiceTracker, {
     in = Mix.new(SoundIn.ar([0,1]));
 
 	amp = Amplitude.kr(in, 0.05, 0.01, 1);
-    # freq, hasFreq = Pitch.kr(in);
+	# freq, hasFreq = Tartini.kr(in);
 
-    //Out.kr(outFreqBus, freq);
+    Out.kr(outFreqBus, freq);
 	Out.ar(outputBus, in);
 }).send(s);
 
@@ -103,9 +102,9 @@ SynthDef.new(\harmonizer, {
 	//shift2 = WrapIndex.kr(buffer2.midicps.round(1),fundamental);
 	//shift3 = WrapIndex.kr(buffer3.midicps.round(1),fundamental);
 
-	h1 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitch1), 0.0, 0.0, amp1);
-	h2 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitch2), 0.0, 0.0, amp2);
-	h3 = PitchShift.ar(in, 0.2, (2.pow(1/12)).pow(pitch3), 0.0, 0.0, amp3);
+	h1 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch1), (2.pow(1/12)).pow(pitch1));
+	h2 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch2), (2.pow(1/12)).pow(pitch2));
+	h3 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch3), (2.pow(1/12)).pow(pitch3));
 
 	harmonics = Mix.new([amp1*h1, amp2*h2, amp3*h3]);
 	harmonics = amph * harmonics;
@@ -148,7 +147,7 @@ SynthDef.new(\finalSum, {
 //~finalBus = Bus.audio(s, 1);
 
 // this bus contains the frequency of the note sung by the user
-//~fundamentalBus = Bus.control(s, 1);
+~fundamentalBus = Bus.control(s, 1);
 
 // Create the groups
 ~inputGroup = Group.new;
@@ -156,7 +155,7 @@ SynthDef.new(\finalSum, {
 ~outputGroup = Group.after(~harmonizerGroup);
 
 // instances of the various model Synth
-~harmonizer = Synth.new(\harmonizer, [\inputBus, ~trackerOut, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm, \buffer1, ~diffbuf.bufnum, \buffer2, ~diffbuf2.bufnum, \buffer3, ~diffbuf3.bufnum ], ~harmonizerGroup);
+~harmonizer = Synth.new(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm, \buffer1, ~diffbuf.bufnum, \buffer2, ~diffbuf2.bufnum, \buffer3, ~diffbuf3.bufnum ], ~harmonizerGroup);
 
 ~finalSum = Synth.new(\finalSum, [\inputVoiceBus, ~harmonizerVoice, \inputHarmBus, ~harmonizerHarm], ~outputGroup);
 )
@@ -242,7 +241,7 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 ~b1.string = "ON";
 ~b1.action_({
 
-    ~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut], ~inputGroup);
+    ~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut, \outFreqBus, ~fundamentalBus], ~inputGroup);
 
 });
 
@@ -271,4 +270,3 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 ~voiceTracker.free;
 
 ~finalBus.inspect;
-
