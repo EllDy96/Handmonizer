@@ -55,8 +55,8 @@ FreqScope.new // ploting the spectogram
 ~diffbuf.postln;
 
 ~pitchRatioControlBuses = Array.fill(1, {arg i; Bus.control(s, 1)});
-//~pitchRatioControlBuses = Bus.control(s, 1);
 
+~scale = Bus.control(s, 1);
 
 )
 
@@ -79,6 +79,8 @@ SynthDef.new(\voiceTracker, {
 	Out.ar(outputBus, in);
 }).send(s);
 
+SynthDef.new(\scaleControll, )
+
 
 SynthDef.new(\harmonizer, {
 	|
@@ -95,6 +97,16 @@ SynthDef.new(\harmonizer, {
 	var fundamental, inFreq, out;
 	var h1, h2, h3;
 	var pitchRatio = In.kr(~pitchRatioControlBuses[0], 1);
+	var scaleArray;
+	var harmonic1 = 3, harmonic2 = 5;
+	var pitch = 0;
+	var sc = In.kr(~scale[0],1);
+	postln(sc);
+
+	scaleArray = MiscFuncs.getScaleIntervals.matchAt(sc);
+	postln(scaleArray);
+	(harmonic1-1).do({arg index = 0; pitch1 = pitch+scaleArray[index]});
+	(harmonic2-1).do({arg index = 0; pitch2 = pitch+scaleArray[index]});
 
 	//fundamental = inFreqBus.cpsmidi.round(1);
 
@@ -104,13 +116,13 @@ SynthDef.new(\harmonizer, {
 
 	h1 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch1), (2.pow(1/12)).pow(pitch1));
 	h2 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch2), (2.pow(1/12)).pow(pitch2));
-	h3 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch3), (2.pow(1/12)).pow(pitch3));
+	//h3 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch3), (2.pow(1/12)).pow(pitch3));
 
-	harmonics = Mix.new([amp1*h1, amp2*h2, amp3*h3]);
+	harmonics = Mix.new([amp1*h1, amp2*h2]);
 	harmonics = amph * harmonics;
 
     Out.ar(outVoiceBus, in);
-	Out.ar(outHarmBus, harmonics);
+	Out.ar(outHarmBus, 0.5*harmonics);
 }).send(s);
 
 
@@ -257,6 +269,17 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 ~b3.string = "EXIT";
 ~b3.action_({Window.closeAll});
 
+~b4 = Button(w, Rect(50, 150, 50, 50));
+~b4.string = "Major";
+~b4.action_({~scale[0].set(0)});
+
+~b5 = Button(w, Rect(100, 150, 50, 50));
+~b5.string = "Minor";
+~b5.action_({~scale[0].set(1)});
+
+~sc = PopUpMenu(w, Rect(10, 10, 100, 30));
+~sc.items = ['Major', 'Minor'];
+postln(~sc.value);
 )
 
 
@@ -270,3 +293,9 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 ~voiceTracker.free;
 
 ~finalBus.inspect;
+
+
+(
+a = MiscFuncs.getScaleIntervals.matchAt('nat_major');
+postln(a);
+)
