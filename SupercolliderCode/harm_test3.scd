@@ -8,13 +8,26 @@ ServerOptions.outDevices;
 //if server fails to start and error encountered:  try, try again...it's stubborn sometimes...
 
 (
-
 ServerOptions.devices;
 o = Server.local.options;
+postln(o);
+Server.local.options.hardwareBufferSize=128;
 o.sampleRate = nil;
 o.blockSize = 32;
 o.inDevice = "ASIO : ASIO4ALL v2"; // using ASIO4All to have the lowest latency
 o.outDevice = "ASIO : ASIO4ALL v2";
+s.latency = 0.02; //0.2 is SC default
+s.boot;
+)
+
+(
+ServerOptions.devices;
+o = Server.local.options;
+Server.local.options.hardwareBufferSize=128;
+o.sampleRate = nil;
+o.blockSize = 32;
+o.inDevice = "ASIO : UMC ASIO Driver"; // using ASIO4All to have the lowest latency
+o.outDevice = "ASIO : UMC ASIO Driver";
 s.latency = 0.02; //0.2 is SC default
 s.boot;
 )
