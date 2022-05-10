@@ -82,10 +82,6 @@ FreqScope.new; // ploting the spectogram
 	var i = 0, j = 0;
 	var pitch = 1;
 	var ratio = 1;
-	//var note = 47;
-	//n = MykFiddle.new;
-	//n.run;
-	//n.callback_({arg n; note = n});
 
 	while({i < 33}, {
 
@@ -103,7 +99,6 @@ FreqScope.new; // ploting the spectogram
 
    for (0, scaleMIDI.size-2, {
 	   arg k;
-	   //postln(k);
 	   if( note == scaleMIDI[k] , {
 	   	  pitch = scaleMIDI[k+2] - scaleMIDI[k] ;
 		}, {pitch = 0;});
@@ -111,7 +106,6 @@ FreqScope.new; // ploting the spectogram
 
 
 ratio = (2.pow(1/12)).pow(pitch);
-//postln("Ratio :" + ratio);
 };
 
 )
@@ -129,7 +123,6 @@ SynthDef.new(\voiceTracker, {
 
     in = Mix.new(SoundIn.ar([0,1]));
 
-	//amp = Amplitude.kr(in, 0.05, 0.01, 1);
 	# freq, hasFreq = Tartini.kr(in);
 	//midiFundamental = freq.cpsmidi;
 
@@ -146,7 +139,7 @@ SynthDef.new(\harmonizer, {
     outHarmBus, outVoiceBus
 	buffer1, buffer2, buffer3
 	amph = 1
-	amp3Up = 0, amp5Up = 0, amp8Up = 0, amp3Low = 0, amp5Low = 0, amp8Low = 0
+	amp3Up = 1, amp5Up = 1, amp3Low = 0, amp5Low = 0
 	pitch1 = 0, pitch2 = 0, pitch3 = 0
 	|
 
@@ -189,11 +182,9 @@ SynthDef.new(\harmonizer, {
 
 	thirdUp = amp3Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p1), (2.pow(1/12)).pow(p1), grainsPeriod: 2);
     fifthUp = amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p2), (2.pow(1/12)).pow(p2), grainsPeriod: 2);
-	//octUp = amp8Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p3), (2.pow(1/12)).pow(p3), grainsPeriod: 2);
 
 	thirdLow = amp3Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p1), 0.5*(2.pow(1/12)).pow(p1), grainsPeriod: 4);
     fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p2), 0.5*(2.pow(1/12)).pow(p2), grainsPeriod: 4);
-	//octLow = amp8Low * PitchShiftPA.ar(in, inFreqBus, 0.5, 0.5, grainsPeriod: 4);
 
 
 	harmonics = Mix.new([thirdUp, fifthUp, thirdLow, fifthLow]);
@@ -207,20 +198,28 @@ SynthDef.new(\harmonizer, {
 
 SynthDef.new(\finalSum, {
     |
-    inputVoiceBus, inputHarmBus, outputBus
+    inputVoiceBus, inputHarmBus, outputBus, mix = -0.5
     |
 
 	var input, harmonics;
     var out;
+
+	var add;
+    var source;
+    var delay;
+    var mixDelayed;
 
 	input = In.ar(inputVoiceBus, 1);
 	harmonics = In.ar(inputHarmBus, 1);
 
 	out = Mix.new([input, harmonics]);
 
-    //out = AllpassN.ar(input, 0.040, [0.040.rand, 0.040.rand], 2);
 
-	Out.ar([0,1], out);
+	delay = DelayL.ar(out, 0.5, 0.3, 1);
+
+	mixDelayed = XFade2.ar(out, delay, mix);
+
+	Out.ar([0,1], mixDelayed);
 }).send(s);
 
 )
@@ -270,80 +269,8 @@ OSCdef('OSCreceiver',
 		x_map = LinLin.ar(x,0,1,0,2);// mapping the feedback
         y_map = LinLin.ar(y,0,1,0,2); // mapping of the index (increase the modulation amplitude)
         z_map = LinLin.ar(z,0,1,0,1);// mapping of the cut off lpf
-		k_map = LinLin.ar(k,0,1,0,6); //  mapping of the Reverb amount
+		k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
 
-		//~finalSum.set(\gain,x_map);
-		//~harmonizer.set(\numVoices,y_map);
-		//~rev.set(\wetR, x_map);
-        /*
-		if ( x_map < 1 ,
-			{
-				~harmonizer.set(\amp3, 0, \amp2, 0, \amp1, 1);
-				~harmonizer.postln;
-			},
-			if(x_map < 2,
-					{ ~harmonizer.set(\amp3, 0, \amp2, 1, \amp1, 1);
-					  ~harmonizer.postln;
-				},{
-					~harmonizer.set(\amp3, 1, \amp2, 1, \amp1, 1);
-					~harmonizer.postln;
-				}
-		));
-
-
-		if ( y_map < 1,
-			{
-				~harmonizer.set(\oct1, 0.5, \grain, 4);
-		    },
-			if(y_map < 2,
-		    {
-				~harmonizer.set(\oct1, 1, \grain, 2);
-			},{
-			    ~harmonizer.set(\oct1, 2, \grain, 2);
-			}
-		));*/
-
-/*
-		if ( x_map < 1 ,
-			{
-				if ( y_map < 1,
-			{
-				~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp8Up, 0, \amp3Low, 1, \amp5Low, 0, \amp8Low, 0);
-				},0
-			    if(y_map < 2,
-		    {
-				~harmonizer.set(\amp3Up, 1, \amp5up, 0, \amp8Up, 0, \amp3Low, 1, \amp5Low, 0, \amp8Low, 0);
-			}
-		));
-			},
-			if(x_map < 2,
-					{
-					if ( y_map < 1,
-			{
-				~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp8Up, 0, \amp3Low, 1, \amp5Low, 1, \amp8Low, 0);
-		    },
-			        if(y_map < 2,
-		    {
-				~harmonizer.set(\amp3Up, 1, \amp5up, 0, \amp8Up, 0, \amp3Low, 1, \amp5Low, 0, \amp8Low, 0);
-			},{
-			    ~harmonizer.set(\amp3Up, 1, \amp5up, 1, \amp8Up, 0, \amp3Low, 0, \amp5Low, 0, \amp8Low, 0);
-			}
-		));
-				},{
-					if ( y_map < 1,
-			{
-				~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp8Up, 0, \amp3Low, 1, \amp5Low, 1, \amp8Low, 1);
-		    },
-			        if(y_map < 2,
-		    {
-				~harmonizer.set(\amp3Up, 1, \amp5up, 0, \amp8Up, 0, \amp3Low, 1, \amp5Low, 0, \amp8Low, 0);
-			},{
-			    ~harmonizer.set(\amp3Up, 1, \amp5up, 1, \amp8Up, 1, \amp3Low, 0, \amp5Low, 0, \amp8Low, 0);
-			}
-		));
-				}
-		));
-*/
 
 		if(x_map < 1,
 			{
@@ -366,22 +293,18 @@ OSCdef('OSCreceiver',
 		});
 
 
-		//~harmonizer.set(\amp, x_map, \amp1, y_map);
-		//~harmonizer.set(\pitch1, x_map, \pitch2, y_map);
-
 		if ( z_map < 0.5, {
 			~harmonizer.set(\amph, 0);
 		}, {
 			~harmonizer.set(\amph, 1);
 		});
 
-		//~harmonizer.set(\vibRate, k_map);
 
+		~finalSum.set(\mix, k_map);
 
 
         //Printing the OSC values:
-		//postln("Tracking parameter: x : "+ x +" - y : "+ y + " - z: "+ z + "palm slope: " + k);
-		postln("Mapped parameter: X: "+ x_map  + " - Y: " + y_map + " - ON/OFF: "+ k_map );
+		postln("Mapped parameter: X: "+ x_map  + " - Y: " + y_map + " - ON/OFF: " + z_map + " - Delay dry/wet: " + k_map);
 	},"/params");
 
 )
@@ -441,15 +364,4 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 });
 )
 
-
-
-~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut], ~inputGroup);
-~voiceTracker.run(true);
-~voicetracker.run(false);
-~voiceTracker.set(\gain, 1);
-~voiceTracker.set(\gain, 0.5);
-~voiceTracker.set(\gain, 0);
-~voiceTracker.free;
-
-~finalBus.inspect;
 
