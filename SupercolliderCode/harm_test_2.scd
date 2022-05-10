@@ -147,7 +147,7 @@ SynthDef.new(\harmonizer, {
 	buffer1, buffer2, buffer3
 	amp = 1, amp1 = 1, amp2 = 1, amp3 = 1, amph = 1
 	pitch1 = 0, pitch2 = 0, pitch3 = 0
-	oct1 = 1
+	oct1 = 1, grain = 2
 	vibRate = 6
 	|
 
@@ -167,7 +167,7 @@ SynthDef.new(\harmonizer, {
 	var midiIn = inFreqBus.cpsmidi;
 
 
-	scaleArray = MiscFuncs.getScaleIntervals.matchAt(1);
+	scaleArray = MiscFuncs.getScaleIntervals.matchAt(0);
 	postln(scaleArray);
 	postln(pitch1);
 
@@ -187,9 +187,9 @@ SynthDef.new(\harmonizer, {
 
 	////////////// Fixed harmony ///////////////
 
-	h1 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p1), (2.pow(1/12)).pow(p1), grainsPeriod: 3);
-	h2 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p2), (2.pow(1/12)).pow(p2), grainsPeriod: 3);
-	//h3 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p3), (2.pow(1/12)).pow(p3));
+	h1 = PitchShiftPA.ar(in, inFreqBus, oct1*(2.pow(1/12)).pow(p1), oct1*(2.pow(1/12)).pow(p1), grainsPeriod: grain);
+	h2 = PitchShiftPA.ar(in, inFreqBus, oct1*(2.pow(1/12)).pow(p2), oct1*(2.pow(1/12)).pow(p2), grainsPeriod: grain);
+	//h3 = PitchShiftPA.ar(in, inFreqBus, oct1*(2.pow(1/12)).pow(p3), oct1*(2.pow(1/12)).pow(p3), grainsPeriod: grain);
 
 	harmonics = Mix.new([amp1*h1, amp2*h2]);
 	harmonics = amph * harmonics;
@@ -285,15 +285,16 @@ OSCdef('OSCreceiver',
 				}
 		));*/
 
+
 		if ( x_map < 1,
 			{
-				~harmonizer.set(\oct1, 0.5);
+				~harmonizer.set(\oct1, 0.5, \grain, 4);
 		    },
 			if(x_map < 2,
 		    {
-				~harmonizer.set(\oct1, 1);
+				~harmonizer.set(\oct1, 1, \grain, 2);
 			},{
-			    ~harmonizer.set(\oct1, 2);
+			    ~harmonizer.set(\oct1, 2, \grain, 2);
 			}
 		));
 
@@ -312,7 +313,7 @@ OSCdef('OSCreceiver',
 
         //Printing the OSC values:
 		postln("Tracking parameter: x : "+ x +" - y : "+ y + " - z: "+ z + "palm slope: " + k);
-		postln("Mapped parameter: gain: "+x_map +" - numVoices: "+ y_map +" - Reverb: "+ k_map );
+		postln("Mapped parameter: Octave: "+ x_map  + " - ON/OFF: "+ k_map );
 	},"/params");
 
 )
