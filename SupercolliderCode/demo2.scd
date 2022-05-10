@@ -68,6 +68,7 @@ FreqScope.new; // ploting the spectogram
 	});
 
 
+
    for (0, scaleMIDI.size-2, {
 	   arg k;
 	   if( note == scaleMIDI[k] , {
@@ -170,19 +171,36 @@ SynthDef.new(\harmonizer, {
 
 SynthDef.new(\finalSum, {
     |
-    inputVoiceBus, inputHarmBus, outputBus
+    inputVoiceBus, inputHarmBus, outputBus, wetR = 0.4, mix = -0.5
     |
 
 	var input, harmonics;
     var out;
 
+    var delay;
+    var mixDelayed;
+	var reverb;
+    var mixReverbed;
+	var highpassedReverb;
+	var dry;
+
+	dry = 1 - wetR;
 
 	input = In.ar(inputVoiceBus, 1);
 	harmonics = In.ar(inputHarmBus, 1);
 
 	out = Mix.new([input, harmonics]);
 
-	Out.ar([0,1], out);
+	delay = CombC.ar(out, 0.7, 0.3, 2);
+
+	mixDelayed = XFade2.ar(delay, out, mix);
+
+	reverb = GVerb.ar( mixDelayed , 15, 4, 0.3, 1, 15, dry, 0.4, 0.3);
+	highpassedReverb= HPF.ar(reverb,75);
+
+    mixReverbed = Mix([mixDelayed * (1-wetR), highpassedReverb * wetR]);
+
+	Out.ar([0,1], mixReverbed);
 }).send(s);
 
 )
@@ -229,36 +247,22 @@ OSCdef('OSCreceiver',
 		k = msg[4];// palm slope   -> Reverb amount->the square magnitude
 
 
-		x_map = LinLin.ar(x,0,1,0,2);// mapping the feedback
-        y_map = LinLin.ar(y,0,1,0,2); // mapping of the index (increase the modulation amplitude)
+		x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
+        y_map = LinLin.ar(y,0,1,-1,0.8); // mapping of the index (increase the modulation amplitude)
         z_map = LinLin.ar(z,0,1,0,1);// mapping of the cut off lpf
-		k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
+		k_map = LinLin.ar(k,0,1,-1,0); //  mapping of the Reverb amount
 
 
 		if(x_map < 1,
 			{
-				if(y_map < 1,
-					{
-						~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp3Low, 0.5, \amp5Low, 0);
-						postln("only the third low");
-				},
-					{
-						~harmonizer.set(\amp3Up, 1, \amp5up, 0, \amp3Low, 0, \amp5Low, 0);
-						postln("only the third high");
-				});
-		},
-			{
-				if(y_map < 1,
-					{
-						~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp3Low, 0.5, \amp5Low, 0.5);
-						postln("only the third and the fifth low");
-				},
-					{
-						~harmonizer.set(\amp3Up, 1, \amp5up, 1, \amp3Low, 0, \amp5Low, 0);
-						postln("only the third and the fifth up");
-				});
-		});
+				~harmonizer.set(\amp3Up, 0.7, \amp5Up, 0, \amp8Up, 0);
 
+		}, if(x_map < 2, {
+
+				~harmonizer.set(\amp3Up, 0.7, \amp5Up, 0.7, \amp8Up, 0);
+		}, {
+				~harmonizer.set(\amp3Up, 0.7, \amp5Up, 0.7, \amp8Up, 0.5);
+		}));
 
 
 		if ( z_map < 0.2, {
@@ -269,6 +273,19 @@ OSCdef('OSCreceiver',
 			postln("harmony is on");
 
 		});
+
+		if( k_map< -0.8,
+			{
+				~finalSum.set(\wetR, 0.8);
+				postln("you reach the maximum Reverb!!");
+			},
+			{
+				~finalSum.set(\wetR, 0-k_map);
+		});
+
+
+        ~finalSum.set(\mix, y_map);
+
 
 
         //Printing the OSC values:

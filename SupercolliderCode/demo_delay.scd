@@ -1,61 +1,33 @@
 
 Server.killAll
-
+////////////////////////////////// Two voices with 4 reagions Harmonizer + Delay as the hand slope /////////////////////////////////////////////////////
 
 ( //#1 ======INITIALIZE SC SERVER ======
 //if server fails to start and error encountered:  try, try again...it's stubborn sometimes...
 o = Server.local.options;
 o.sampleRate = 48000;
 o.blockSize = 32;
-o.inDevice = "Windows WASAPI : Headset Mic (2- Realtek High Definition Audio)"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
-o.outDevice = "Windows WASAPI : Speakers / Headphones (2- Realtek High Definition Audio)"; //use system default audio output (change value to manually configure output)
+o.inDevice =  "ASIO : UMC ASIO Driver"; // "Windows WASAPI : Headset Mic (2- Realtek High Definition Audio)"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
+o.outDevice =  "ASIO : UMC ASIO Driver";//"Windows WASAPI : Speakers / Headphones (2- Realtek High Definition Audio)"; //use system default audio output (change value to manually configure output)
 s.latency = 0.01; //0.2 is SC default
 s.boot;
 )
 
-ServerOptions.devices;
-ServerOptions.inDevices;
-ServerOptions.outDevices;
 
 
+//////////////////////////functional tools/////////////////////
 (
 s.scope; // plotting the wave in time domain
 FreqScope.new; // ploting the spectogram
+ServerOptions.devices;
+ServerOptions.inDevices;
+ServerOptions.outDevices;
 )
 
 ///////////////////////////////////// MODEL ////////////////////////////////////////////////////
 
 (
 
-// define a table of reference notes [c c# d ... b]
-~table = Array.fill(12, {arg i; i + 60}); // [60,61,...,71]
-
-// define a table of mapped notes (Default values)
-~mapped = Array.fill(12, {arg i; i + 64}); // starts from e3 the major third from the 75
-~mapped2 = Array.fill(12, {arg i; i + 67});//the fifth
-~mapped3 = Array.fill(12, {arg i; i + 71});//the octave
-
-~midiON = 0;
-
-// define a table to store the difference between reference and mapped note
-~difference = Array.fill(~table.size, {0});
-// define a buffer on the server for consultation from the SynthDef
-~diffbuf = Buffer.loadCollection(s, ~table, action:{|msg| msg.postln;});
-
-~difference2 = Array.fill(~table.size, {0});
-~diffbuf2 = Buffer.loadCollection(s, ~table, action:{|msg| msg.postln;});
-~difference3 = Array.fill(~table.size, {0});
-~diffbuf3 = Buffer.loadCollection(s, ~table, action:{|msg| msg.postln;});
-
-~difference.do({arg item, i;   ~difference[i] = (~table[i] - ~mapped[i]).midiratio.reciprocal; });// the do methods is used to iterate through a collection doing what you specify to each member of the array
-~difference2.do({arg item, i;  ~difference2[i] = (~table[i] - ~mapped2[i]).midiratio.reciprocal;});
-~difference3.do({arg item, i; ~difference3[i] = (~table[i] - ~mapped3[i]).midiratio.reciprocal;});
-
-~diffbuf.setn(0, ~difference);
-~diffbuf2.setn(0, ~difference2);
-~diffbuf3.setn(0, ~difference3);
-
-~diffbuf.postln;
 
 ~pitchRatioControlBuses = Array.fill(1, {arg i; Bus.control(s, 1)});
 
@@ -205,7 +177,6 @@ SynthDef.new(\finalSum, {
     var out;
 
 	var add;
-    var source;
     var delay;
     var mixDelayed;
 
@@ -215,9 +186,9 @@ SynthDef.new(\finalSum, {
 	out = Mix.new([input, harmonics]);
 
 
-	delay = DelayL.ar(out, 0.5, 0.3, 1);
+	delay = CombC.ar(out, 0.7, 0.3, 2);
 
-	mixDelayed = XFade2.ar(out, delay, mix);
+	mixDelayed = XFade2.ar(delay, out, mix);
 
 	Out.ar([0,1], mixDelayed);
 }).send(s);
@@ -276,31 +247,44 @@ OSCdef('OSCreceiver',
 			{
 				if(y_map < 1,
 					{
-						~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp3Low, 1, \amp5Low, 0);
+						~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp3Low, 0.5, \amp5Low, 0);
+						postln("only the third low");
 				},
 					{
 						~harmonizer.set(\amp3Up, 1, \amp5up, 0, \amp3Low, 0, \amp5Low, 0);
+						postln("only the third high");
 				});
 		},
 			{
 				if(y_map < 1,
 					{
-						~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp3Low, 1, \amp5Low, 1);
+						~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp3Low, 0.5, \amp5Low, 0.5);
+						postln("only the third and the fifth low");
 				},
 					{
 						~harmonizer.set(\amp3Up, 1, \amp5up, 1, \amp3Low, 0, \amp5Low, 0);
+						postln("only the third and the fifth up");
 				});
 		});
 
 
-		if ( z_map < 0.5, {
+		if ( z_map < 0.2, {
 			~harmonizer.set(\amph, 0);
+			postln("harmony is off");
 		}, {
 			~harmonizer.set(\amph, 1);
+			postln("harmony is on");
+
 		});
 
+		if (k_map>= 0.8,{
+			~finalSum.set(\mix, 1);
+			postln( "delaaaay OFF");
 
+		},
+		{
 		~finalSum.set(\mix, k_map);
+		});
 
 
         //Printing the OSC values:
@@ -342,11 +326,20 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 
     ~voiceTracker.free;
 
+
 });
 
 ~b3 = Button(w, Rect(200, 50, 100, 50));
 ~b3.string = "EXIT";
-~b3.action_({Window.closeAll});
+~b3.action_(
+	{
+		Window.closeAll;
+		~voiceTracker.free;
+		Server.freeAll;
+
+	}
+
+);
 
 ~b4 = Button(w, Rect(50, 150, 50, 50));
 ~b4.string = "Major";
