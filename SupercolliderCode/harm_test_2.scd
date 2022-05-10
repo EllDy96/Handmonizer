@@ -7,13 +7,16 @@ Server.killAll
 o = Server.local.options;
 o.sampleRate = 48000;
 o.blockSize = 32;
-o.inDevice = nil; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
-o.outDevice = nil; //use system default audio output (change value to manually configure output)
-s.latency = 0.02; //0.2 is SC default
+o.inDevice = "Windows WASAPI : Headset Mic (2- Realtek High Definition Audio)"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
+o.outDevice = "Windows WASAPI : Speakers / Headphones (2- Realtek High Definition Audio)"; //use system default audio output (change value to manually configure output)
+s.latency = 0.01; //0.2 is SC default
 s.boot;
 )
 
 ServerOptions.devices;
+ServerOptions.inDevices;
+ServerOptions.outDevices;
+
 
 (
 s.scope; // plotting the wave in time domain
@@ -65,9 +68,9 @@ FreqScope.new; // ploting the spectogram
 
 ~pitchRatioCompute = {
 	|
-	key = 0
-	scaleType = 0
-	note = 47
+	key
+	scaleType
+	note
 	|
 
 	var a = MiscFuncs.getNoteToMidi.matchAt(key);
@@ -79,6 +82,10 @@ FreqScope.new; // ploting the spectogram
 	var i = 0, j = 0;
 	var pitch = 1;
 	var ratio = 1;
+	//var note = 47;
+	//n = MykFiddle.new;
+	//n.run;
+	//n.callback_({arg n; note = n});
 
 	while({i < 33}, {
 
@@ -99,7 +106,7 @@ FreqScope.new; // ploting the spectogram
 	   //postln(k);
 	   if( note == scaleMIDI[k] , {
 	   	  pitch = scaleMIDI[k+2] - scaleMIDI[k] ;
-       });
+		}, {pitch = 0;});
 });
 
 
@@ -122,11 +129,12 @@ SynthDef.new(\voiceTracker, {
 
     in = Mix.new(SoundIn.ar([0,1]));
 
-	amp = Amplitude.kr(in, 0.05, 0.01, 1);
+	//amp = Amplitude.kr(in, 0.05, 0.01, 1);
 	# freq, hasFreq = Tartini.kr(in);
-	midiFundamental = cpsmidi(freq);
+	//midiFundamental = freq.cpsmidi;
 
-	Out.kr(outMidi, midiFundamental);
+
+	//Out.kr(outMidi, midiFundamental);
     Out.kr(outFreqBus, freq);
 	Out.ar(outputBus, in);
 }).send(s);
@@ -156,10 +164,9 @@ SynthDef.new(\harmonizer, {
 	var p1 = 0, p2 = 0, p3 = 0;
 	var grains = 2;
 	var kk = 0, st = 0;
+	var midiIn = inFreqBus.cpsmidi;
 
 
-
-    /*
 	scaleArray = MiscFuncs.getScaleIntervals.matchAt(1);
 	postln(scaleArray);
 	postln(pitch1);
@@ -167,7 +174,7 @@ SynthDef.new(\harmonizer, {
 	(harmonic1-1).do({arg index = 0; p1 = p1+scaleArray[index]});
 	(harmonic2-1).do({arg index = 0; p2 = p2+scaleArray[index]});
     postln(p1);
-	postln(p2); */
+	postln(p2);
 
 	//fundamental = inFreqBus.cpsmidi.round(1);
 
@@ -175,19 +182,20 @@ SynthDef.new(\harmonizer, {
 	//shift2 = WrapIndex.kr(buffer2.midicps.round(1),fundamental);
 	//shift3 = WrapIndex.kr(buffer3.midicps.round(1),fundamental);
 
-	p1 = ~pitchRatioCompute.value(kk, st, inMidi);
-	postln("Semitones :" + p1);
+	//p1 = ~pitchRatioCompute.value(kk, st);
+	//postln("Pitch ratio :" + p1);
 
-	//h1 = PitchShiftPA.ar(in, inFreqBus, ~pitchRatioCompute.value(key, scaleType, inMidi), ~pitchRatioCompute.value(key, scaleType, inMidi), grainsPeriod: 3);
-	h1 = PitchShiftPA.ar(in, inFreqBus, p1, p1, grainsPeriod: 3);
-	//h2 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p2), (2.pow(1/12)).pow(p2), grainsPeriod: 3);
+	//h1 = PitchShiftPA.ar(in, inFreqBus, p1, p1, grainsPeriod: 3);
+
+	h1 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p1), (2.pow(1/12)).pow(p1), grainsPeriod: 3);
+	h2 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p2), (2.pow(1/12)).pow(p2), grainsPeriod: 3);
 	//h3 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p3), (2.pow(1/12)).pow(p3));
 
-	//harmonics = Mix.new([amp1*h1, amp2*h2]);
-	//harmonics = amph * harmonics;
+	harmonics = Mix.new([amp1*h1, amp2*h2]);
+	harmonics = amph * harmonics;
 
-    Out.ar(outVoiceBus, 0*in);
-	Out.ar(outHarmBus, h1);
+    Out.ar(outVoiceBus, in);
+	Out.ar(outHarmBus, harmonics);
 }).send(s);
 
 
@@ -233,7 +241,7 @@ SynthDef.new(\finalSum, {
 ~outputGroup = Group.after(~harmonizerGroup);
 
 // instances of the various model Synth
-~harmonizer = Synth.new(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \inMidi, ~midiFundamental, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm, \buffer1, ~diffbuf.bufnum, \buffer2, ~diffbuf2.bufnum, \buffer3, ~diffbuf3.bufnum ], ~harmonizerGroup);
+~harmonizer = Synth.new(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm, \buffer1, ~diffbuf.bufnum, \buffer2, ~diffbuf2.bufnum, \buffer3, ~diffbuf3.bufnum ], ~harmonizerGroup);
 
 ~finalSum = Synth.new(\finalSum, [\inputVoiceBus, ~harmonizerVoice, \inputHarmBus, ~harmonizerHarm], ~outputGroup);
 )
@@ -332,7 +340,7 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 ~b1.string = "ON";
 ~b1.action_({
 
-    ~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut, \outFreqBus, ~fundamentalBus, \outMidi, ~midiFundamental], ~inputGroup);
+    ~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut, \outFreqBus, ~fundamentalBus], ~inputGroup);
 
 });
 
