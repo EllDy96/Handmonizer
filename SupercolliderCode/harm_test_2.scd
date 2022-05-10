@@ -145,20 +145,19 @@ SynthDef.new(\harmonizer, {
 	key = 3, scaleType = 0
     outHarmBus, outVoiceBus
 	buffer1, buffer2, buffer3
-	amp = 1, amp1 = 1, amp2 = 1, amp3 = 1, amph = 1
+	amph = 1
+	amp3Up = 0, amp5Up = 0, amp8Up = 0, amp3Low = 0, amp5Low = 0, amp8Low = 0
 	pitch1 = 0, pitch2 = 0, pitch3 = 0
-	oct1 = 1, grain = 2
-	vibRate = 6
 	|
 
 	var in = In.ar(inputBus, 1);
 	var partials, voice, harmonics;
     var shift1, shift2, shift3;
 	var fundamental, inFreq, out;
-	var h1, h2, h3;
+	var thirdUp, fifthUp, octUp, thirdLow, fifthLow, octLow;
 	var pitchRatio = In.kr(~pitchRatioControlBuses[0], 1);
 	var scaleArray;
-	var harmonic1 = 3, harmonic2 = 5;
+	var harmonic1 = 3, harmonic2 = 5, harmonic3 = 8;
 	var pitch = 0;
 	var sc_ale = In.kr(~scale[0], 1);
 	var p1 = 0, p2 = 0, p3 = 0;
@@ -169,12 +168,13 @@ SynthDef.new(\harmonizer, {
 
 	scaleArray = MiscFuncs.getScaleIntervals.matchAt(0);
 	postln(scaleArray);
-	postln(pitch1);
 
 	(harmonic1-1).do({arg index = 0; p1 = p1+scaleArray[index]});
 	(harmonic2-1).do({arg index = 0; p2 = p2+scaleArray[index]});
+	(harmonic3-1).do({arg index = 0; p3 = p3+scaleArray[index]});
     postln(p1);
 	postln(p2);
+	postln(p3);
 
 	/*
 	////////// Pitch shift ratio function ///////////
@@ -187,11 +187,16 @@ SynthDef.new(\harmonizer, {
 
 	////////////// Fixed harmony ///////////////
 
-	h1 = PitchShiftPA.ar(in, inFreqBus, oct1*(2.pow(1/12)).pow(p1), oct1*(2.pow(1/12)).pow(p1), grainsPeriod: grain);
-	h2 = PitchShiftPA.ar(in, inFreqBus, oct1*(2.pow(1/12)).pow(p2), oct1*(2.pow(1/12)).pow(p2), grainsPeriod: grain);
-	//h3 = PitchShiftPA.ar(in, inFreqBus, oct1*(2.pow(1/12)).pow(p3), oct1*(2.pow(1/12)).pow(p3), grainsPeriod: grain);
+	thirdUp = amp3Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p1), (2.pow(1/12)).pow(p1), grainsPeriod: 2);
+    fifthUp = amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p2), (2.pow(1/12)).pow(p2), grainsPeriod: 2);
+	octUp = amp8Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p3), (2.pow(1/12)).pow(p3), grainsPeriod: 2);
 
-	harmonics = Mix.new([amp1*h1, amp2*h2]);
+	thirdLow = amp3Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p1), 0.5*(2.pow(1/12)).pow(p1), grainsPeriod: 4);
+    fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p2), 0.5*(2.pow(1/12)).pow(p2), grainsPeriod: 4);
+	octLow = amp8Low * PitchShiftPA.ar(in, inFreqBus, 0.5, 0.5, grainsPeriod: 4);
+
+
+	harmonics = Mix.new([thirdUp, fifthUp, octUp, thirdLow, fifthLow, octLow]);
 	harmonics = amph * harmonics;
 
     Out.ar(outVoiceBus, in);
@@ -283,20 +288,65 @@ OSCdef('OSCreceiver',
 					~harmonizer.set(\amp3, 1, \amp2, 1, \amp1, 1);
 					~harmonizer.postln;
 				}
-		));*/
+		));
 
 
-		if ( x_map < 1,
+		if ( y_map < 1,
 			{
 				~harmonizer.set(\oct1, 0.5, \grain, 4);
 		    },
-			if(x_map < 2,
+			if(y_map < 2,
 		    {
 				~harmonizer.set(\oct1, 1, \grain, 2);
 			},{
 			    ~harmonizer.set(\oct1, 2, \grain, 2);
 			}
+		));*/
+
+
+		if ( x_map < 1 ,
+			{
+				if ( y_map < 1,
+			{
+				~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp8Up, 0, \amp3Low, 1, \amp5Low, 0, \amp8Low, 0);
+		    },
+			    if(y_map < 2,
+		    {
+				~harmonizer.set(\amp3Up, 1, \amp5up, 0, \amp8Up, 0, \amp3Low, 1, \amp5Low, 0, \amp8Low, 0);
+			},{
+			    ~harmonizer.set(\amp3Up, 1, \amp5up, 0, \amp8Up, 0, \amp3Low, 0, \amp5Low, 0, \amp8Low, 0);
+			}
 		));
+			},
+			if(x_map < 2,
+					{
+					if ( y_map < 1,
+			{
+				~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp8Up, 0, \amp3Low, 1, \amp5Low, 1, \amp8Low, 0);
+		    },
+			        if(y_map < 2,
+		    {
+				~harmonizer.set(\amp3Up, 1, \amp5up, 0, \amp8Up, 0, \amp3Low, 1, \amp5Low, 0, \amp8Low, 0);
+			},{
+			    ~harmonizer.set(\amp3Up, 1, \amp5up, 1, \amp8Up, 0, \amp3Low, 0, \amp5Low, 0, \amp8Low, 0);
+			}
+		));
+				},{
+					if ( y_map < 1,
+			{
+				~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp8Up, 0, \amp3Low, 1, \amp5Low, 1, \amp8Low, 1);
+		    },
+			        if(y_map < 2,
+		    {
+				~harmonizer.set(\amp3Up, 1, \amp5up, 0, \amp8Up, 0, \amp3Low, 1, \amp5Low, 0, \amp8Low, 0);
+			},{
+			    ~harmonizer.set(\amp3Up, 1, \amp5up, 1, \amp8Up, 1, \amp3Low, 0, \amp5Low, 0, \amp8Low, 0);
+			}
+		));
+				}
+		));
+
+
 
 		//~harmonizer.set(\amp, x_map, \amp1, y_map);
 		//~harmonizer.set(\pitch1, x_map, \pitch2, y_map);
