@@ -176,16 +176,16 @@ SynthDef.new(\harmonizer, {
     postln(p1);
 	postln(p2);
 
-	//fundamental = inFreqBus.cpsmidi.round(1);
-
-	//shift1 = WrapIndex.kr(buffer1, fundamental);
-	//shift2 = WrapIndex.kr(buffer2.midicps.round(1),fundamental);
-	//shift3 = WrapIndex.kr(buffer3.midicps.round(1),fundamental);
+	/*
+	////////// Pitch shift ratio function ///////////
 
 	//p1 = ~pitchRatioCompute.value(kk, st);
 	//postln("Pitch ratio :" + p1);
 
 	//h1 = PitchShiftPA.ar(in, inFreqBus, p1, p1, grainsPeriod: 3);
+    */
+
+	////////////// Fixed harmony ///////////////
 
 	h1 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p1), (2.pow(1/12)).pow(p1), grainsPeriod: 3);
 	h2 = PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p2), (2.pow(1/12)).pow(p2), grainsPeriod: 3);
