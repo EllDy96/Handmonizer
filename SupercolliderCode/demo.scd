@@ -9,8 +9,8 @@ Server.killAll
 o = Server.local.options;
 o.sampleRate = 48000;
 o.blockSize = 32;
-o.inDevice =  "ASIO : UMC ASIO Driver"; // "Windows WASAPI : Headset Mic (2- Realtek High Definition Audio)"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
-o.outDevice =  "ASIO : UMC ASIO Driver";//"Windows WASAPI : Speakers / Headphones (2- Realtek High Definition Audio)"; //use system default audio output (change value to manually configure output)
+o.inDevice =  "Windows WASAPI : Headset Mic (2- Realtek High Definition Audio)"; // "ASIO : UMC ASIO Driver"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
+o.outDevice =  "Windows WASAPI : Speakers / Headphones (2- Realtek High Definition Audio)";//"ASIO : UMC ASIO Driver"; //use system default audio output (change value to manually configure output)
 s.latency = 0.01; //0.2 is SC default
 s.boot;
 )
@@ -208,7 +208,7 @@ SynthDef.new(\finalSum, {
 ~outputGroup = Group.after(~harmonizerGroup);
 
 // instances of the various model Synth
-~harmonizer = Synth.new(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm, \buffer1, ~diffbuf.bufnum, \buffer2, ~diffbuf2.bufnum, \buffer3, ~diffbuf3.bufnum ], ~harmonizerGroup);
+~harmonizer = Synth.new(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm], ~harmonizerGroup);
 
 ~finalSum = Synth.new(\finalSum, [\inputVoiceBus, ~harmonizerVoice, \inputHarmBus, ~harmonizerHarm], ~outputGroup);
 )
