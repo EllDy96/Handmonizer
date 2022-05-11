@@ -1,33 +1,37 @@
-
+s.boot;
 Server.killAll
-////////////////////////////////// Two voices with 4 reagions Harmonizer + Delay as the hand slope /////////////////////////////////////////////////////
+
+////////////////////////////////// Two voices with 4 reagions Harmonizer/////////////////////////////////////////////////////
+
 
 ( //#1 ======INITIALIZE SC SERVER ======
-//if server fails to start and error encountered:  try, try again...it's stubborn sometimes...
+
 o = Server.local.options;
 o.sampleRate = 48000;
 o.blockSize = 32;
-o.inDevice =  "ASIO : UMC ASIO Driver"; // "Windows WASAPI : Headset Mic (2- Realtek High Definition Audio)"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
-o.outDevice =  "ASIO : UMC ASIO Driver";//"Windows WASAPI : Speakers / Headphones (2- Realtek High Definition Audio)"; //use system default audio output (change value to manually configure output)
+o.inDevice =  "ASIO : Focusrite USB ASIO";//"ASIO : Focusrite USB ASIO"; // "ASIO : UMC ASIO Driver"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
+o.outDevice ="ASIO : Focusrite USB ASIO";//"ASIO : UMC ASIO Driver"; //use system default audio output (change value to manually configure output)
 s.latency = 0.01; //0.2 is SC default
 s.boot;
 )
+{ SinOsc.ar(200, 0, 0.5) }.play;
 
 
 
-//////////////////////////functional tools/////////////////////
-(
-s.scope; // plotting the wave in time domain
-FreqScope.new; // ploting the spectogram
 ServerOptions.devices;
 ServerOptions.inDevices;
 ServerOptions.outDevices;
+
+m = ServerMeter.new(s, 4, 2);
+
+(
+s.scope; // plotting the wave in time domain
+FreqScope.new; // ploting the spectogram
 )
 
 ///////////////////////////////////// MODEL ////////////////////////////////////////////////////
 
 (
-
 
 ~pitchRatioControlBuses = Array.fill(1, {arg i; Bus.control(s, 1)});
 
@@ -68,7 +72,6 @@ ServerOptions.outDevices;
 	});
 
 
-
    for (0, scaleMIDI.size-2, {
 	   arg k;
 	   if( note == scaleMIDI[k] , {
@@ -102,6 +105,8 @@ SynthDef.new(\voiceTracker, {
 	//Out.kr(outMidi, midiFundamental);
     Out.kr(outFreqBus, freq);
 	Out.ar(outputBus, in);
+
+	//Out.ar([0,1], in);
 }).send(s);
 
 SynthDef.new(\harmonizer, {
@@ -111,7 +116,7 @@ SynthDef.new(\harmonizer, {
     outHarmBus, outVoiceBus
 	buffer1, buffer2, buffer3
 	amph = 1
-	amp3Up = 1, amp5Up = 1, amp3Low = 0, amp5Low = 0
+	amp3Up = 0, amp5Up = 0, amp8Up = 0, amp3Low = 0, amp5Low = 0
 	pitch1 = 0, pitch2 = 0, pitch3 = 0
 	|
 
@@ -154,12 +159,13 @@ SynthDef.new(\harmonizer, {
 
 	thirdUp = amp3Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p1), (2.pow(1/12)).pow(p1), grainsPeriod: 2);
     fifthUp = amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p2), (2.pow(1/12)).pow(p2), grainsPeriod: 2);
+	octUp = amp8Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p2), (2.pow(1/12)).pow(p2), grainsPeriod: 2);
 
 	thirdLow = amp3Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p1), 0.5*(2.pow(1/12)).pow(p1), grainsPeriod: 4);
     fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p2), 0.5*(2.pow(1/12)).pow(p2), grainsPeriod: 4);
 
 
-	harmonics = Mix.new([thirdUp, fifthUp, thirdLow, fifthLow]);
+	harmonics = Mix.new([thirdUp, fifthUp, octUp]);
 	harmonics = amph * harmonics;
 
     Out.ar(outVoiceBus, in);
@@ -170,27 +176,19 @@ SynthDef.new(\harmonizer, {
 
 SynthDef.new(\finalSum, {
     |
-    inputVoiceBus, inputHarmBus, outputBus, mix = -0.5
+    inputVoiceBus, inputHarmBus, outputBus
     |
 
 	var input, harmonics;
     var out;
 
-	var add;
-    var delay;
-    var mixDelayed;
 
 	input = In.ar(inputVoiceBus, 1);
 	harmonics = In.ar(inputHarmBus, 1);
 
 	out = Mix.new([input, harmonics]);
 
-
-	delay = CombC.ar(out, 0.7, 0.3, 2);
-
-	mixDelayed = XFade2.ar(delay, out, mix);
-
-	Out.ar([0,1], mixDelayed);
+	Out.ar([0,1], out);
 }).send(s);
 
 )
@@ -216,7 +214,7 @@ SynthDef.new(\finalSum, {
 ~outputGroup = Group.after(~harmonizerGroup);
 
 // instances of the various model Synth
-~harmonizer = Synth.new(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm ], ~harmonizerGroup);
+~harmonizer = Synth.new(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm], ~harmonizerGroup);
 
 ~finalSum = Synth.new(\finalSum, [\inputVoiceBus, ~harmonizerVoice, \inputHarmBus, ~harmonizerHarm], ~outputGroup);
 )
@@ -268,6 +266,7 @@ OSCdef('OSCreceiver',
 		});
 
 
+
 		if ( z_map < 0.2, {
 			~harmonizer.set(\amph, 0);
 			postln("harmony is off");
@@ -277,18 +276,9 @@ OSCdef('OSCreceiver',
 
 		});
 
-		if (k_map>= 0.8,{
-			~finalSum.set(\mix, 1);
-			postln( "delaaaay OFF");
-
-		},
-		{
-		~finalSum.set(\mix, k_map);
-		});
-
 
         //Printing the OSC values:
-		postln("Mapped parameter: X: "+ x_map  + " - Y: " + y_map + " - ON/OFF: " + z_map + " - Delay dry/wet: " + k_map);
+		postln("Mapped parameter: X: "+ x_map  + " - Y: " + y_map + " - ON/OFF: "+ z_map );
 	},"/params");
 
 )
@@ -326,20 +316,11 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 
     ~voiceTracker.free;
 
-
 });
 
 ~b3 = Button(w, Rect(200, 50, 100, 50));
 ~b3.string = "EXIT";
-~b3.action_(
-	{
-		Window.closeAll;
-		~voiceTracker.free;
-		Server.freeAll;
-
-	}
-
-);
+~b3.action_({Window.closeAll});
 
 ~b4 = Button(w, Rect(50, 150, 50, 50));
 ~b4.string = "Major";
