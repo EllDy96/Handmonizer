@@ -111,6 +111,7 @@ SynthDef.new(\harmonizer, {
     outHarmBus, outVoiceBus
 	buffer1, buffer2, buffer3
 	amph = 1
+	amp8Low=0
 	amp3Up = 0, amp5Up = 0, amp8Up = 0, amp3Low = 0, amp5Low = 0
 	pitch1 = 0, pitch2 = 0, pitch3 = 0
 	|
@@ -154,11 +155,11 @@ SynthDef.new(\harmonizer, {
 
 	thirdUp = amp3Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p1), (2.pow(1/12)).pow(p1), grainsPeriod: 2);
     fifthUp = amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p2), (2.pow(1/12)).pow(p2), grainsPeriod: 2);
-	octUp = amp8Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p2), (2.pow(1/12)).pow(p2), grainsPeriod: 2);
+	octUp = amp8Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p3), (2.pow(1/12)).pow(p3), grainsPeriod: 2);
 
 	thirdLow = amp3Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p1), 0.5*(2.pow(1/12)).pow(p1), grainsPeriod: 4);
     fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p2), 0.5*(2.pow(1/12)).pow(p2), grainsPeriod: 4);
-
+	octLow = amp8Low  * PitchShiftPA.ar(in, inFreqBus, 0.5, 0.5, grainsPeriod: 2);
 
 	harmonics = Mix.new([thirdUp, fifthUp, octUp]);
 	harmonics = amph * harmonics;
@@ -171,36 +172,27 @@ SynthDef.new(\harmonizer, {
 
 SynthDef.new(\finalSum, {
     |
-    inputVoiceBus, inputHarmBus, outputBus, wetR = 0.4, mix = -0.5
+    inputVoiceBus, inputHarmBus, outputBus, mix = -0.5
     |
 
 	var input, harmonics;
     var out;
 
+	var add;
     var delay;
     var mixDelayed;
-	var reverb;
-    var mixReverbed;
-	var highpassedReverb;
-	var dry;
-
-	dry = 1 - wetR;
 
 	input = In.ar(inputVoiceBus, 1);
 	harmonics = In.ar(inputHarmBus, 1);
 
 	out = Mix.new([input, harmonics]);
 
+
 	delay = CombC.ar(out, 0.7, 0.3, 2);
 
 	mixDelayed = XFade2.ar(delay, out, mix);
 
-	reverb = GVerb.ar( mixDelayed , 15, 4, 0.3, 1, 15, dry, 0.4, 0.3);
-	highpassedReverb= HPF.ar(reverb,75);
-
-    mixReverbed = Mix([mixDelayed * (1-wetR), highpassedReverb * wetR]);
-
-	Out.ar([0,1], mixReverbed);
+	Out.ar([0,1], mixDelayed);
 }).send(s);
 
 )
@@ -248,21 +240,47 @@ OSCdef('OSCreceiver',
 
 
 		x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
-        y_map = LinLin.ar(y,0,1,-1,0.8); // mapping of the index (increase the modulation amplitude)
+        y_map = LinLin.ar(y,0,1,0,2); // mapping of the index (increase the modulation amplitude)
         z_map = LinLin.ar(z,0,1,0,1);// mapping of the cut off lpf
 		k_map = LinLin.ar(k,0,1,-1,0); //  mapping of the Reverb amount
 
 
 		if(x_map < 1,
 			{
-				~harmonizer.set(\amp3Up, 0.7, \amp5Up, 0, \amp8Up, 0);
+				if(y_map < 1,
+					{
+						~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp3Low, 0.7, \amp5Low, 0, \amp8Low, 0);
+						postln("only the third low");
+				},
+					{
+						~harmonizer.set(\amp3Up, 0.5, \amp5up, 0, \amp3Low, 0, \amp5Low, 0, \amp8Low, 0);
+						postln("only the third high");
+				});
+			}, if(x_map < 2, {
 
-		}, if(x_map < 2, {
+				if(y_map < 1,
+					{
+						~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp3Low, 0.7, \amp5Low, 0.7, \amp8Low, 0);
+						postln("only the third and the fifth low");
+				},
+					{
+						~harmonizer.set(\amp3Up, 0.5, \amp5up, 0.5, \amp3Low, 0, \amp5Low, 0, \amp8Low, 0);
+						postln("only the third and the fifth up");
+				});
+			})
+			{
+				if(y_map < 1,
+					{
+						~harmonizer.set(\amp3Up, 0, \amp5up, 0, \amp3Low, 0.7, \amp5Low, 0.7, \amp8Low, 0.7);
+						postln("only the third and the fifth low");
+				},
+					{
+						~harmonizer.set(\amp3Up, 0.5, \amp5up, 0.5, \amp3Low, 0, \amp5Low, 0, \amp8Low, 0.7);
+						postln("only the third and the fifth up");
+				});
+		});
 
-				~harmonizer.set(\amp3Up, 0.7, \amp5Up, 0.7, \amp8Up, 0);
-		}, {
-				~harmonizer.set(\amp3Up, 0.7, \amp5Up, 0.7, \amp8Up, 0.5);
-		}));
+
 
 
 		if ( z_map < 0.2, {
@@ -274,17 +292,14 @@ OSCdef('OSCreceiver',
 
 		});
 
-		if( k_map< -0.8,
-			{
-				~finalSum.set(\wetR, 0.8);
-				postln("you reach the maximum Reverb!!");
-			},
-			{
-				~finalSum.set(\wetR, 0-k_map);
+		if (k_map>= 0.8,{
+			~finalSum.set(\mix, 1);
+			postln( "delaaaay OFF");
+
+		},
+		{
+		~finalSum.set(\mix, k_map);
 		});
-
-
-        ~finalSum.set(\mix, y_map);
 
 
 
