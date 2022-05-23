@@ -1,18 +1,18 @@
 
+
 Server.killAll
 
 //////////////////3 voices with 6 reagions Harmonizer (4th, 5th, minor 7th)///////////////////////////////////
-
 
 
 (
 //#1 ======INITIALIZE SC SERVER ======
 //if server fails to start and error encountered:  try, try again...it's stubborn sometimes...
 o = Server.local.options;
-o.sampleRate = 48000;
+//o.sampleRate = nil;
 o.blockSize = 32;
-o.inDevice =  "ASIO : Focusrite USB ASIO"; //"Windows WASAPI : Headset Mic (2- Realtek High Definition Audio)"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
-o.outDevice =  "ASIO : Focusrite USB ASIO"; //"Windows WASAPI : Speakers / Headphones (2- Realtek High Definition Audio)";  //use system default audio output (change value to manually configure output)
+o.outDevice =  "Windows WASAPI : Missaggio stereo (Realtek High Definition Audio)";
+o.inDevice =  "Windows WASAPI : Gruppo microfoni (Realtek High Definition Audio)";
 s.latency = 0.01; //0.2 is SC default
 s.boot;
 )
@@ -170,6 +170,7 @@ SynthDef.new(\harmonizer, {
 }).send(s);
 
 
+/////////////////////////////////////////////////FINAL MIX/////////////////////////////////////////////
 
 SynthDef.new(\finalSum, {
     |
@@ -186,15 +187,34 @@ SynthDef.new(\finalSum, {
 	input = In.ar(inputVoiceBus, 1);
 	harmonics = In.ar(inputHarmBus, 1);
 
+
 	out = Mix.new([input, harmonics]);
 
 
-	delay = CombL.ar(out, 0.7, 0.3, 2);
+	//delay = CombL.ar(out, 0.7, 0.3, 2);
 
-	mixDelayed = XFade2.ar(delay, out, mix);
+	//mixDelayed = XFade2.ar(delay, out, mix);
 
-	Out.ar([0,1], mixDelayed);
+	Out.ar(outputBus, out);
 }).send(s);
+
+
+
+/////////////////////////////////Effects///////////////////////////////
+
+SynthDef(\delayEffect, {
+	|
+    inputBus, outputBus, wetD = 0
+    |
+	var sig, delay,  maxdeltime=0.2, deltime=0.5, mix=(-1), decay=2;
+
+    sig = In.ar(inputBus);
+    delay = CombL.ar(sig, maxdeltime, deltime, decay);
+	sig = Mix([sig*(1-wetD), delay*wetD]);
+
+	Out.ar([0,1],sig);
+}).send(s);
+
 
 )
 
@@ -207,6 +227,12 @@ SynthDef.new(\finalSum, {
 ~trackerOut = Bus.audio(s, 1);
 ~harmonizerVoice = Bus.audio(s, 1);
 ~harmonizerHarm = Bus.audio(s, 1);
+
+~dlIn = Bus.audio(s, 1);
+
+~finalBus = Bus.audio(s, 1);
+
+
 //~finalBus = Bus.audio(s, 1);
 
 // this bus contains the frequency of the note sung by the user
@@ -217,11 +243,17 @@ SynthDef.new(\finalSum, {
 ~inputGroup = Group.new;
 ~harmonizerGroup = Group.after(~inputGroup);
 ~outputGroup = Group.after(~harmonizerGroup);
+~effectsGroup = Group.after(~outputGroup);
+
 
 // instances of the various model Synth
 ~harmonizer = Synth.new(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm], ~harmonizerGroup);
 
-~finalSum = Synth.new(\finalSum, [\inputVoiceBus, ~harmonizerVoice, \inputHarmBus, ~harmonizerHarm], ~outputGroup);
+~finalSum = Synth.new(\finalSum, [\inputVoiceBus, ~harmonizerVoice, \inputHarmBus, ~harmonizerHarm, \outputBus, ~dlIn], ~outputGroup);
+
+~dl = Synth.after(~finalSum, \delayEffect, [\inputBus, ~dlIn, \outputBus, ~finalBus], ~effectsGroup);
+
+
 )
 
 

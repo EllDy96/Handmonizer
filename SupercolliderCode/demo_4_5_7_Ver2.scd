@@ -4,16 +4,14 @@ Server.killAll
 //////////////////3 voices with 6 reagions Harmonizer (4th, 5th, minor 7th)///////////////////////////////////
 
 
-
-(
-//#1 ======INITIALIZE SC SERVER ======
+( //#1 ======INITIALIZE SC SERVER ======
 //if server fails to start and error encountered:  try, try again...it's stubborn sometimes...
 o = Server.local.options;
 o.sampleRate = 48000;
 o.blockSize = 32;
-o.inDevice =  "ASIO : Focusrite USB ASIO"; //"Windows WASAPI : Headset Mic (2- Realtek High Definition Audio)"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
-o.outDevice =  "ASIO : Focusrite USB ASIO"; //"Windows WASAPI : Speakers / Headphones (2- Realtek High Definition Audio)";  //use system default audio output (change value to manually configure output)
-s.latency = 0.01; //0.2 is SC default
+o.inDevice = "ASIO : Focusrite USB ASIO";//"ASIO : UMC ASIO Driver"; //"Windows WASAPI : Headset Mic (2- Realtek High Definition Audio)"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
+o.outDevice =  "ASIO : Focusrite USB ASIO";// "ASIO : UMC ASIO Driver"; //"Windows WASAPI : Speakers / Headphones (2- Realtek High Definition Audio)";  //use system default audio output (change value to manually configure output)
+s.latency = 0.02; //0.2 is SC default
 s.boot;
 )
 
@@ -174,6 +172,7 @@ SynthDef.new(\harmonizer, {
 SynthDef.new(\finalSum, {
     |
     inputVoiceBus, inputHarmBus, outputBus, mix = -0.5
+	delayTime=0.3
     |
 
 	var input, harmonics;
@@ -189,7 +188,7 @@ SynthDef.new(\finalSum, {
 	out = Mix.new([input, harmonics]);
 
 
-	delay = CombL.ar(out, 0.7, 0.3, 2);
+	delay = CombL.ar(out,0.8, 0.4, 2.5);
 
 	mixDelayed = XFade2.ar(delay, out, mix);
 
@@ -286,7 +285,7 @@ OSCdef('OSCreceiver',
 
 		~harmonizer.set(\ampLow, 1-y_map, \ampHigh, y_map);
 
-		postln("Amp low: " + (1-y_map) + "  Amp high: " + y_map);
+		//postln("Amp low: " + (1-y_map) + "  Amp high: " + y_map);
 
 
 
@@ -340,6 +339,7 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 ~b1.action_({
 
     ~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut, \outFreqBus, ~fundamentalBus], ~inputGroup);
+	postln("the Harmonizer is On!");
 
 });
 
@@ -348,6 +348,7 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 ~b2.action_({
 
     ~voiceTracker.free;
+	postln("the Harmonizer is Off!");
 
 });
 
