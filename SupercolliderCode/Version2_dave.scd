@@ -2,6 +2,11 @@
 
 Server.killAll
 
+
+(
+s.scope; // plotting the wave in time domain
+FreqScope.new; // ploting the spectogram
+)
 //////////////////3 voices with 6 reagions Harmonizer (4th, 5th, minor 7th)///////////////////////////////////
 
 
@@ -22,10 +27,7 @@ ServerOptions.inDevices;
 ServerOptions.outDevices;
 
 
-(
-s.scope; // plotting the wave in time domain
-FreqScope.new; // ploting the spectogram
-)
+
 
 ///////////////////////////////////// MODEL ////////////////////////////////////////////////////
 
@@ -202,17 +204,19 @@ SynthDef.new(\finalSum, {
 
 /////////////////////////////////Effects///////////////////////////////
 
+//// Check the effect in parrallel instead that in Cascade
 SynthDef(\delayEffect, {
 	|
-    inputBus, outputBus, wetD = 0
+    inputBus, outputBus, mix= 0.5, delTime=0.5, decay=2 //wetD = 0.5
     |
-	var sig, delay,  maxdeltime=0.2, deltime=0.5, mix=(-1), decay=2;
+	var in, delay, mixDelayed,  maxDelTime=2;
 
-    sig = In.ar(inputBus);
-    delay = CombL.ar(sig, maxdeltime, deltime, decay);
-	sig = Mix([sig*(1-wetD), delay*wetD]);
+    in = In.ar(inputBus);
+    delay = CombL.ar(in, maxDelTime, delTime, decay);
+	//sig = Mix([sig*(1-wetD), delay*wetD]);
+	mixDelayed = XFade2.ar(delay, in, mix);
 
-	Out.ar([0,1],sig);
+	Out.ar([0,1],mixDelayed);
 }).send(s);
 
 
@@ -251,7 +255,7 @@ SynthDef(\delayEffect, {
 
 ~finalSum = Synth.new(\finalSum, [\inputVoiceBus, ~harmonizerVoice, \inputHarmBus, ~harmonizerHarm, \outputBus, ~dlIn], ~outputGroup);
 
-~dl = Synth.after(~finalSum, \delayEffect, [\inputBus, ~dlIn, \outputBus, ~finalBus], ~effectsGroup);
+~dl = Synth.new( \delayEffect, [\inputBus, ~dlIn, \outputBus, ~finalBus], ~effectsGroup);
 
 
 )
@@ -332,12 +336,12 @@ OSCdef('OSCreceiver',
 		});
 
 		if (k_map>= 0.8,{
-			~finalSum.set(\mix, 1);
+			~dl.set(\mix, 1);
 			postln( "delaaaay OFF");
 
 		},
 		{
-		~finalSum.set(\mix, k_map);
+		~dl.set(\mix, k_map);
 		});
 
 
@@ -361,9 +365,36 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 	                action: {arg thisSlider; ~pitchRatioControlBuses[0].set(thisSlider.value)},
 					initVal: 0,
 					initAction: true,
-					labelWidth: 60,
+					labelWidth: 100,
 					numberWidth: 60,
-					unitWidth: 30,
+					unitWidth: 60,
+					labelHeight: 20,
+				);
+~decaySlider = EZSlider(
+					parent: w,
+					bounds: Rect(85,100 , 300, 20),
+					label: "Delay Decay",
+					controlSpec: ControlSpec(minval: 1, maxval: 10, warp: \lin, step: 1, units:\Decay),
+	                action: {arg thisSlider; ~dl.set(\decay, thisSlider.value)},
+					initVal: 2,
+					initAction: true,
+					labelWidth: 100,
+					numberWidth: 60,
+					unitWidth: 45,
+					labelHeight: 20,
+				);
+
+~delTimeSlider = EZSlider(
+					parent: w,
+					bounds: Rect(85, 120, 300, 20),
+					label: "Delay Time",
+					controlSpec: ControlSpec(minval: 0.1, maxval: 1.9, warp: \lin, step: 0.1, units:\delTime),
+	                action: {arg thisSlider; ~dl.set(\delTime, thisSlider.value)},
+					initVal: 1,
+					initAction: true,
+					labelWidth: 100,
+					numberWidth: 60,
+					unitWidth: 45,
 					labelHeight: 20,
 				);
 
@@ -402,5 +433,8 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 	postln(~scale);
 });
 )
+
+~dl.set(\delTime, 0.3, \decay, 1);
+
 
 
