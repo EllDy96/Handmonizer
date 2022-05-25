@@ -25,69 +25,11 @@ s.scope; // plotting the wave in time domain
 FreqScope.new; // ploting the spectogram
 )
 
-///////////////////////////////////// MODEL ////////////////////////////////////////////////////
-
-(
-
-~pitchRatioControlBuses = Array.fill(1, {arg i; Bus.control(s, 1)});
-
-~scale = Array.fill(1, {arg i; Bus.control(s, 1)});
-
-)
-
-////pitch ratio function////
-(
-
-~pitchRatioCompute = {
-	|
-	key
-	scaleType
-	note
-	|
-
-	var a = MiscFuncs.getNoteToMidi.matchAt(key);
-	var scaleArray = MiscFuncs.getScaleIntervals.matchAt(scaleType);
-
-	var scaleMIDI = Array.fill(33, 0);
-	var diff = 0;
-
-	var i = 0, j = 0;
-	var pitch = 0;
-	var ratio = 1;
-	var targetNote;
-
-	while({i < 33}, {
-
-	    j = j%scaleArray.size;
-
-		diff = diff + scaleArray[j];
-
-	    scaleMIDI[i] = a + diff;
-
-	    i = i+1;
-	    j = j+1;
-	});
-
-
-   for (0, scaleMIDI.size-2, {
-	   arg k;
-	   if( note == scaleMIDI[k] , {
-			targetNote = scaleMIDI[k+2];
-			pitch = targetNote - note;
-		},
-		{
-			targetNote = note;
-		});
-});
-
-    ratio = (2.pow(1/12)).pow(pitch);
-};
-
-)
 
 //////SYNTHS///////
 
 (
+
 SynthDef.new(\voiceTracker, {
     |
     outputBus, outFreqBus, outMidi
@@ -99,19 +41,16 @@ SynthDef.new(\voiceTracker, {
     in = Mix.new(SoundIn.ar([0,1]));
 
 	# freq, hasFreq = Tartini.kr(in);
-	//midiFundamental = freq.cpsmidi;
-
-
-	//Out.kr(outMidi, midiFundamental);
     Out.kr(outFreqBus, freq);
 	Out.ar(outputBus, in);
 }).send(s);
 
 SynthDef.new(\pitchRatio, {
 	|
-	key = 0, scaleType = 0
 	ratioOut
 	|
+
+	var key = 0, scaleType = 0;
 
 	var note = 47;
 
@@ -132,9 +71,8 @@ SynthDef.new(\pitchRatio, {
 	fiddle.callback_({
 	    arg n;
 		note = n.asInteger;
-	    postln("MIDI note: " + note);
+		postln("MIDI note: " + note);
     });
-	postln("NOTE:" + note);
 
 	while({i < 33}, {
 
@@ -161,9 +99,9 @@ SynthDef.new(\pitchRatio, {
    });
 
     ratio = (2.pow(1/12)).pow(pitch);
+	postln("Pitch Ratio: " + ratio);
 
 	Out.kr(ratioOut, ratio);
-
 
 }).send(s);
 
@@ -180,8 +118,8 @@ SynthDef.new(\harmonizer, {
 	var freq = In.ar(inFreqBus, 1);
 	var ratio = In.ar(ratioIn, 1);
 
-	h = PitchShiftPA.ar(in, freq, ratio, ratio, grainsPeriod: 2);
-	//h = PitchShift.ar(in, 0.2, 1.5);
+	h = amph * PitchShiftPA.ar(in, freq, ratio, ratio, grainsPeriod: 2);
+	//h = PitchShift.ar(in, 0.2, ratio);
 
     Out.ar(outVoiceBus, in);
 	Out.ar(outHarmBus, h);
@@ -231,7 +169,7 @@ SynthDef.new(\finalSum, {
 
 // instances of the various model Synth
 ~pitchRatioSynth = Synth.new(\pitchRatio, [\ratioOut, ~pitchRatioBus], ~harmonizerGroup);
-~harmonizer = Synth.after(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm, \ratioIn, ~pitchRatioBus], ~harmonizerGroup);
+~harmonizer = Synth.new(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \ratioIn, ~pitchRatioBus, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm], ~harmonizerGroup);
 
 ~finalSum = Synth.new(\finalSum, [\inputVoiceBus, ~harmonizerVoice, \inputHarmBus, ~harmonizerHarm], ~outputGroup);
 )
@@ -305,53 +243,40 @@ OSCdef('OSCreceiver',
 Window.closeAll;
 w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 
-~slider = EZSlider(
-					parent: w,
-					bounds: Rect(85, 20, 300, 20),
-					label: "P.R.",
-					controlSpec: ControlSpec(minval: -12, maxval: 12, warp: \lin, step: 1, units:\semitones),
-	                action: {arg thisSlider; ~pitchRatioControlBuses[0].set(thisSlider.value)},
-					initVal: 0,
-					initAction: true,
-					labelWidth: 60,
-					numberWidth: 60,
-					unitWidth: 30,
-					labelHeight: 20,
-				);
-
-~b1 = Button(w, Rect(50, 50, 50, 50));
-~b1.string = "ON";
+~b1 = Button(w, Rect(10, 10, 75, 50));
+~b1.states = [
+	["Play", Color.black, Color.green],
+	["Stop", Color.white, Color.red],
+];
 ~b1.action_({
+	arg view;
 
-    ~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut, \outFreqBus, ~fundamentalBus], ~inputGroup);
+	if (view.value == 1, {
+		~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut, \outFreqBus, ~fundamentalBus], ~inputGroup);
+		postln("the Harmonizer is On!");
+	},{
+		~voiceTracker.free;
+		postln("the Harmonizer is Off!");
+	});
 
 });
 
-~b2 = Button(w, Rect(100, 50, 50, 50));
-~b2.string = "OFF";
-~b2.action_({
 
-    ~voiceTracker.free;
-
-});
-
-~b3 = Button(w, Rect(200, 50, 100, 50));
+~b3 = Button(w, Rect(180, 10, 75, 50));
 ~b3.string = "EXIT";
 ~b3.action_({Window.closeAll});
 
-~b4 = Button(w, Rect(50, 150, 50, 50));
-~b4.string = "Major";
-~b4.action_({~scale[0].set(0)});
 
-~b5 = Button(w, Rect(100, 150, 50, 50));
-~b5.string = "Minor";
-~b5.action_({~scale[0].set(1)});
+~harmony = Button(w, Rect(95, 10, 75, 50));
+~harmony.states = [
+	["Harmony ON", Color.black, Color.white],
+	["Harmony OFF", Color.white, Color.black],
+];
+~harmony.action_({
+	arg view;
+	~harmonizer.set(\amph, view.value);
 
-~sc = PopUpMenu(w, Rect(10, 10, 100, 30));
-~sc.items = ['Major', 'Minor'];
-~sc.action_({
-	~scale = ~sc.value;
-	postln(~scale);
+
 });
 )
 

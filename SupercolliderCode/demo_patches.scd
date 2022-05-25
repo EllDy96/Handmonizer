@@ -108,12 +108,11 @@ SynthDef.new(\voiceTracker, {
 	Out.ar(outputBus, in);
 }).send(s);
 
+
 SynthDef.new(\harmonizer, {
 	|
 	inputBus, inFreqBus, inMidi
-	//key = 3, scaleType = 0
     outHarmBus, outVoiceBus
-	//buffer1, buffer2, buffer3
 	amph = 1, ampLow = 0, ampHigh = 0
 	amp4Up = 1, amp5Up = 1, amp7Up = 1, amp4Low = 0, amp5Low = 0, amp7Low=0
 	pitch1 = 3, pitch2 = 7, pitch3 = 12
@@ -121,17 +120,10 @@ SynthDef.new(\harmonizer, {
 
 	var in = In.ar(inputBus, 1);
 	var partials, voice, harmonics;
-    //var shift1, shift2, shift3;
 	var fundamental, inFreq, out;
 	var fourthUp, fifthUp, sevenUp, fourthLow, fifthLow, sevenLow;
-	//var pitchRatio = In.kr(~pitchRatioControlBuses[0], 1);
-	//var scaleArray;
-	//var harmonic1 = 4, harmonic2 = 5, harmonic3 = 7;
-	//var pitch = 0;
-	//var sc_ale = In.kr(~scale[0], 1);
-	//var p1 = 0, p2 = 0, p3 = 0;
+
 	var grains = 2;
-	//var kk = 0, st = 0;
 
 /*
 	if (state == 0, {
@@ -155,15 +147,6 @@ SynthDef.new(\harmonizer, {
     postln(p1);
 	postln(p2);
 	postln(p3);*/
-
-	/*
-	////////// Pitch shift ratio function ///////////
-
-	//p1 = ~pitchRatioCompute.value(kk, st);
-	//postln("Pitch ratio :" + p1);
-
-	//h1 = PitchShiftPA.ar(in, inFreqBus, p1, p1, grainsPeriod: 3);
-    */
 
 	////////////// Fixed harmony ///////////////
 
@@ -324,25 +307,9 @@ OSCdef('OSCreceiver',
 
 (
 
-
 Window.closeAll;
 w = Window.new("gui", Rect.new(500, 500, 375, 100)).front.alwaysOnTop_(true);
 
-/*
-~slider = EZSlider(
-					parent: w,
-					bounds: Rect(85, 20, 300, 20),
-					label: "P.R.",
-					controlSpec: ControlSpec(minval: -12, maxval: 12, warp: \lin, step: 1, units:\semitones),
-	                action: {arg thisSlider; ~pitchRatioControlBuses[0].set(thisSlider.value)},
-					initVal: 0,
-					initAction: true,
-					labelWidth: 60,
-					numberWidth: 60,
-					unitWidth: 30,
-					labelHeight: 20,
-				);
-*/
 
 ~b1 = Button(w, Rect(10, 10, 75, 50));
 ~b1.states = [
@@ -362,28 +329,11 @@ w = Window.new("gui", Rect.new(500, 500, 375, 100)).front.alwaysOnTop_(true);
 
 });
 
-/*
-~b2 = Button(w, Rect(100, 50, 50, 50));
-~b2.string = "OFF";
-~b2.action_({
-
-    ~voiceTracker.free;
-	postln("the Harmonizer is Off!");
-
-}); */
 
 ~b3 = Button(w, Rect(180, 10, 75, 50));
 ~b3.string = "EXIT";
 ~b3.action_({Window.closeAll});
-/*
 
-~b4 = Button(w, Rect(50, 150, 50, 50));
-~b4.string = "Major";
-~b4.action_({~scale[0].set(0)});
-
-~b5 = Button(w, Rect(100, 150, 50, 50));
-~b5.string = "Minor";
-~b5.action_({~scale[0].set(1)}); */
 
 ~sc = PopUpMenu(w, Rect(265, 10, 100, 30));
 ~sc.items = ['Patch 1', 'Patch 2'];
@@ -398,24 +348,7 @@ w = Window.new("gui", Rect.new(500, 500, 375, 100)).front.alwaysOnTop_(true);
 		~harmonizer.set(\pitch1, 5, \pitch2, 7, \pitch3, 10);
 	});
 });
-/*
-~bb = Button(w, Rect(265, 10, 100, 50));
-~bb.states = [
-	["Patch 1", Color.black, Color.green],
-	["Patch 2", Color.white, Color.red],
-];
-~bb.action_({
-	arg view;
-	~harmonizer.set(\state, view.value);
-	postln("Patch : " + view.value);
 
-	if (view.value == 0, {
-		~harmonizer.set(\pitch1, 3, \pitch2, 7, \pitch3, 12);
-	},{
-		~harmonizer.set(\pitch1, 5, \pitch2, 7, \pitch3, 10);
-	});
-
-});*/
 
 ~harmony = Button(w, Rect(95, 10, 75, 50));
 ~harmony.states = [
@@ -429,30 +362,5 @@ w = Window.new("gui", Rect.new(500, 500, 375, 100)).front.alwaysOnTop_(true);
 
 });
 
-/*
-~patch1 = Button(w, Rect(50, 300, 50, 50));
-~patch1.string = "Patch 1";
-~patch1.action_({
-	postln("Patch 1 active!");
-	//~harmonizer.set(\state, 0);
-	~patchState.set(0);
-	//var st = In.kr(~patchState, 1);
-	//postln("State : " + st);
-});
-
-~patch2 = Button(w, Rect(100, 300, 50, 50));
-~patch2.string = "Patch 2";
-~patch2.action_({
-	postln("Patch 2 active!");
-	//~harmonizer.set(\state, 1);
-	~patchState.set(1);
-	//var st = In.kr(~patchState, 1);
-	//postln("State : " + st);
-}); */
 )
-
-
-~harmonizer.set(\state, 0);
-~harmonizer.set(\state, 1);
-
 
