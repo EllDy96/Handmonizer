@@ -111,32 +111,29 @@ SynthDef.new(\voiceTracker, {
 SynthDef.new(\harmonizer, {
 	|
 	inputBus, inFreqBus, inMidi
-	key = 3, scaleType = 0
+	//key = 3, scaleType = 0
     outHarmBus, outVoiceBus
-	buffer1, buffer2, buffer3
+	//buffer1, buffer2, buffer3
 	amph = 1, ampLow = 0, ampHigh = 0
 	amp4Up = 1, amp5Up = 1, amp7Up = 1, amp4Low = 0, amp5Low = 0, amp7Low=0
 	pitch1 = 3, pitch2 = 7, pitch3 = 12
-	state
 	|
 
 	var in = In.ar(inputBus, 1);
 	var partials, voice, harmonics;
-    var shift1, shift2, shift3;
+    //var shift1, shift2, shift3;
 	var fundamental, inFreq, out;
 	var fourthUp, fifthUp, sevenUp, fourthLow, fifthLow, sevenLow;
-	var pitchRatio = In.kr(~pitchRatioControlBuses[0], 1);
-	var scaleArray;
-	var harmonic1 = 4, harmonic2 = 5, harmonic3 = 7;
-	var pitch = 0;
-	var sc_ale = In.kr(~scale[0], 1);
-	var p1 = 0, p2 = 0, p3 = 0;
+	//var pitchRatio = In.kr(~pitchRatioControlBuses[0], 1);
+	//var scaleArray;
+	//var harmonic1 = 4, harmonic2 = 5, harmonic3 = 7;
+	//var pitch = 0;
+	//var sc_ale = In.kr(~scale[0], 1);
+	//var p1 = 0, p2 = 0, p3 = 0;
 	var grains = 2;
-	var kk = 0, st = 0;
+	//var kk = 0, st = 0;
 
-	state = 0;
-	postln("ST: " + state);
-
+/*
 	if (state == 0, {
         //harmonic1 = 3;
 		//harmonic2 = 5;
@@ -157,7 +154,7 @@ SynthDef.new(\harmonizer, {
 	(harmonic3-1).do({arg index = 0; p3 = p3+scaleArray[index]});
     postln(p1);
 	postln(p2);
-	postln(p3);
+	postln(p3);*/
 
 	/*
 	////////// Pitch shift ratio function ///////////
@@ -174,9 +171,9 @@ SynthDef.new(\harmonizer, {
     fifthUp = amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch2), (2.pow(1/12)).pow(pitch2), grainsPeriod: 2);
 	sevenUp = amp7Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch3), (2.pow(1/12)).pow(pitch3), grainsPeriod: 2);
 
-	fourthLow = amp4Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p1), 0.5*(2.pow(1/12)).pow(p1), grainsPeriod: 4);
-    fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p2), 0.5*(2.pow(1/12)).pow(p2), grainsPeriod: 4);
-	sevenLow = amp7Low  * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p3), 0.5*(2.pow(1/12)).pow(p3), grainsPeriod: 2);
+	fourthLow = amp4Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch1), 0.5*(2.pow(1/12)).pow(pitch1), grainsPeriod: 4);
+    fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch2), 0.5*(2.pow(1/12)).pow(pitch2), grainsPeriod: 4);
+	sevenLow = amp7Low  * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch3), 0.5*(2.pow(1/12)).pow(pitch3), grainsPeriod: 2);
 
 	harmonics = Mix.new([fourthUp, fifthUp, sevenUp, fourthLow, fifthLow, sevenLow]);
 	harmonics = amph * harmonics;
@@ -392,7 +389,7 @@ w = Window.new("gui", Rect.new(500, 500, 375, 100)).front.alwaysOnTop_(true);
 ~sc.items = ['Patch 1', 'Patch 2'];
 ~sc.action_({
 	arg view;
-	~harmonizer.set(\state, view.value);
+
 	postln("Patch : " + view.value);
 
 	if (view.value == 0, {
