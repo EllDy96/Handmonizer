@@ -107,29 +107,81 @@ SynthDef.new(\voiceTracker, {
 	Out.ar(outputBus, in);
 }).send(s);
 
+SynthDef.new(\pitchRatio, {
+	|
+	key = 0, scaleType = 0
+	ratioOut
+	|
+
+	var note = 47;
+
+	var a = MiscFuncs.getNoteToMidi.matchAt(key);
+	var scaleArray = MiscFuncs.getScaleIntervals.matchAt(scaleType);
+
+	var scaleMIDI = Array.fill(33, 0);
+	var diff = 0;
+
+	var i = 0, j = 0;
+	var pitch = 0;
+	var ratio = 1;
+	var targetNote;
+
+	var fiddle = MykFiddle.new();
+    fiddle.run;
+
+	fiddle.callback_({
+	    arg n;
+		note = n.asInteger;
+	    postln("MIDI note: " + note);
+    });
+	postln("NOTE:" + note);
+
+	while({i < 33}, {
+
+	    j = j%scaleArray.size;
+
+		diff = diff + scaleArray[j];
+
+	    scaleMIDI[i] = a + diff;
+
+	    i = i+1;
+	    j = j+1;
+	});
+
+
+   for (0, scaleMIDI.size-2, {
+	   arg k;
+	   if( note == scaleMIDI[k] , {
+			targetNote = scaleMIDI[k+2];
+			pitch = targetNote - note;
+		},
+		{
+			targetNote = note;
+		});
+   });
+
+    ratio = (2.pow(1/12)).pow(pitch);
+
+	Out.kr(ratioOut, ratio);
+
+
+}).send(s);
+
 SynthDef.new(\harmonizer, {
 	|
 	inputBus, inFreqBus, outHarmBus, outVoiceBus
+	ratioIn
 	amph = 1
 	|
 
+	//postln("Ratio in : " + ratioIn);
 	var in = In.ar(inputBus, 1);
 	var grains = 2;
-	var kk = 0, st = 0;
-	var h;
+	var freq = In.ar(inFreqBus, 1);
+	var ratio = In.ar(ratioIn, 1);
 
-	p = 0;
-    f = MykFiddle.new();
-    f.callback_({
-		arg n;
-	    m = n.asInteger;
-	    p = ~pitchRatioCompute.value(kk,st,m);
-	    postln("Pitch ratio: " + p + " MIDI note :  " + n);
-    });
-    f.run;
-
-	h = PitchShiftPA.ar(in, inFreqBus, 1, 1, grainsPeriod: 2);
-	//h = PitchShift.ar(in, 0.2, p);
+	h = PitchShiftPA.ar(in, freq, ratio, ratio, grainsPeriod: 2);
+	//h = PitchShift.ar(in, 0.2, 1.5);
 
     Out.ar(outVoiceBus, in);
 	Out.ar(outHarmBus, h);
@@ -170,6 +222,7 @@ SynthDef.new(\finalSum, {
 // this bus contains the frequency of the note sung by the user
 ~fundamentalBus = Bus.control(s, 1);
 ~midiFundamental = Bus.control(s, 1);
+~pitchRatioBus = Bus.control(s, 1);
 
 // Create the groups
 ~inputGroup = Group.new;
@@ -177,7 +230,8 @@ SynthDef.new(\finalSum, {
 ~outputGroup = Group.after(~harmonizerGroup);
 
 // instances of the various model Synth
-~harmonizer = Synth.new(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm], ~harmonizerGroup);
+~pitchRatioSynth = Synth.new(\pitchRatio, [\ratioOut, ~pitchRatioBus], ~harmonizerGroup);
+~harmonizer = Synth.after(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm, \ratioIn, ~pitchRatioBus], ~harmonizerGroup);
 
 ~finalSum = Synth.new(\finalSum, [\inputVoiceBus, ~harmonizerVoice, \inputHarmBus, ~harmonizerHarm], ~outputGroup);
 )
