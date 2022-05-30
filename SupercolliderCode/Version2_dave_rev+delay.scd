@@ -6,6 +6,7 @@ Server.killAll
 (
 s.scope; // plotting the wave in time domain
 FreqScope.new; // ploting the spectogram
+a
 )
 //////////////////3 voices with 6 reagions Harmonizer (4th, 5th, minor 7th)///////////////////////////////////
 
@@ -18,7 +19,7 @@ o = Server.local.options;
 o.blockSize = 32;
 o.outDevice =  "Windows WASAPI : Missaggio stereo (Realtek High Definition Audio)";
 o.inDevice =  "Windows WASAPI : Gruppo microfoni (Realtek High Definition Audio)";
-s.latency = 0.01; //0.2 is SC default
+s.latency = 0.001; //0.2 is SC default
 s.boot;
 )
 
@@ -96,9 +97,18 @@ SynthDef.new(\voiceTracker, {
 
     var in, amp, freq, hasFreq, out;
 	var midiFundamental;
+	var inputAmp,threshhold,gate;
+
 
     in = Mix.new(SoundIn.ar([0,1]));
 
+	/////////////Noise-Gate//////////////
+	inputAmp = Amplitude.kr(in);//traking the input amplitude
+	threshhold = 0.02;	// noise gating threshold
+	gate = Lag.kr(inputAmp > threshhold, 0.01);// using Lag to smoothing out control signals.
+	in= in*gate;
+
+	//PithTraking
 	# freq, hasFreq = Tartini.kr(in);
 	//midiFundamental = freq.cpsmidi;
 
@@ -306,7 +316,45 @@ SynthDef.new(\finalMix,{
 ~finalMix= Synth.new(\finalMix,[\inputSignalBus,~finalBus, \inputRevBus,~revBus, \inputDelBus, ~delBus], ~outputGroup);
 
 )
+//****************************************MIDI SETUP*******************************************/
 
+//Istantiation of the Midi keyboard for a monophonic synthetizer
+
+(
+
+MIDIClient.init; // connects to the operating system's MIDI layer, print the lists of available MIDI sources and destinations.
+MIDIIn.connectAll;
+
+MIDIIn.control = { arg src, chan, num, val;   [chan,num,val/127].postln; };//to map the knob
+MIDIIn.bend = { arg src, chan, bend;    [chan,bend/8192].postln; };//controll the pitch well
+
+
+~monoNote= Synth(\harmonizer,[\amp,0]);
+
+~noteOnFunc = {arg val, num, chan, src;
+
+
+	~monoNote.set(\freq, num.midicps,\amp, val/127);// val/127 because we need an amplitude controller, thus the amp to go from 0 to 1
+
+
+	[chan,num,val].postln;
+};
+
+// assign the function to the note on message
+
+a = MIDIFunc.noteOn(func:~noteOnFunc);
+
+//note off function
+~noteOffFunc = {arg val, num, chan, src;
+	~monoNote.set(\amp,0);
+
+};
+
+b = MIDIFunc.noteOff(func:~noteOffFunc);
+
+q = {a.free; b.free};
+
+)
 
 (
 
@@ -403,19 +451,7 @@ OSCdef('OSCreceiver',
 Window.closeAll;
 w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 
-~slider = EZSlider(
-					parent: w,
-					bounds: Rect(85, 20, 300, 20),
-					label: "P.R.",
-					controlSpec: ControlSpec(minval: -12, maxval: 12, warp: \lin, step: 1, units:\semitones),
-	                action: {arg thisSlider; ~pitchRatioControlBuses[0].set(thisSlider.value)},
-					initVal: 0,
-					initAction: true,
-					labelWidth: 100,
-					numberWidth: 60,
-					unitWidth: 60,
-					labelHeight: 20,
-				);
+
 ~decaySlider = EZSlider(
 					parent: w,
 					bounds: Rect(85,100 , 300, 20),
@@ -496,7 +532,7 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 });
 )
 
-~dl.set(\delTime, 0.3, \decay, 1);
+~dl.set(\delTime, 0.3, \decay, 1);s
 
 
 
