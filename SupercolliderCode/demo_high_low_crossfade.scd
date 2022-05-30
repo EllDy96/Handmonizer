@@ -96,8 +96,16 @@ SynthDef.new(\voiceTracker, {
 
     var in, amp, freq, hasFreq, out;
 	var midiFundamental;
+	var inputAmp,threshhold,gate;
 
     in = Mix.new(SoundIn.ar([0,1]));
+
+	/////////////Noise-Gate//////////////////////
+	inputAmp = Amplitude.kr(in);//traking the input amplitude
+	threshhold = 0.02;	// noise gating threshold
+	gate = Lag.kr(inputAmp > threshhold, 0.01);// using Lag to smoothing out control signals.
+	in= in*gate;
+
 
 	# freq, hasFreq = Tartini.kr(in);
 	//midiFundamental = freq.cpsmidi;
@@ -317,6 +325,7 @@ OSCdef('OSCreceiver',
 		arg msg;
 		var x_map, y_map, z_map, k_map, amp, amp1;
 		var high_low_mix;
+		var amp5, amp7;
 
 		x = msg[1]; // x centroid  -> feedback     ->the sphere radius
 		y = msg[2];//  y  centroid -> index        ->the spere rays
@@ -329,7 +338,10 @@ OSCdef('OSCreceiver',
         z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
 		k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
 
-		high_low_mix = LinLin.ar(y,0,1,-1,1);
+		high_low_mix = LinLin.ar(y,0,1,-1.5,1.5);
+
+		amp5 = 0.5*x_map;
+		amp7 = 0.33*x_map;
 
 /*
 		if(x_map < 1,
@@ -394,9 +406,9 @@ OSCdef('OSCreceiver',
 		~dl.set(\mix, k_map);
 		});
 
-		~harmonizer.set(\amp5Up, (x_map/2)-0.5, \amp5Low, (x_map/2)-0.5);
-		~harmonizer.set(\amp7Up, x_map/3, \amp7Low, x_map/3);
-		postln("AMP 5 : " + (x_map/2)-0.5, "  AMP 7 : " + x_map/3);
+		~harmonizer.set(\amp5Up, amp5, \amp5Low, amp5);
+		~harmonizer.set(\amp7Up, amp7, \amp7Low, amp7);
+		postln("AMP 5 : " + amp5, "  AMP 7 : " + amp7);
 
 		~harmonizer.set(\high_low_mix, high_low_mix);
 		postln("High & Low Mix : " + high_low_mix);
