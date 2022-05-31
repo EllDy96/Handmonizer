@@ -288,9 +288,6 @@ SynthDef.new(\finalMix,{
 
 ~finalBus = Bus.audio(s, 1);
 
-
-
-
 // this bus contains the frequency of the note sung by the user
 ~fundamentalBus = Bus.control(s, 1);
 ~midiFundamental = Bus.control(s, 1);
@@ -392,7 +389,7 @@ OSCdef('OSCreceiver',
 			~harmonizer.set(\amph, 0);
 			postln("harmony is off");
 		}, {
-			~harmonizer.set(\amph, z_map);
+			~harmonizer.set(\amph, z_map.log10);
 			postln("harmony is on");
 
 		});
