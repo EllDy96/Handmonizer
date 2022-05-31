@@ -325,10 +325,12 @@ SynthDef.new(\finalMix,{
 MIDIClient.init; // connects to the operating system's MIDI layer, print the lists of available MIDI sources and destinations.
 MIDIIn.connectAll;
 
-MIDIIn.control = { arg src, chan, num, val;   [chan,num,val/127].postln; };//to map the knob
-MIDIIn.bend = { arg src, chan, bend;    [chan,bend/8192].postln; };//controll the pitch well
+//MIDIIn.control = { arg src, chan, num, val;   [chan,num,val/127].postln; };//to map the knob
+//MIDIIn.bend = { arg src, chan, bend;    [chan,bend/8192].postln; };//controll the pitch well
 
 
+
+/*
 ~monoNote= Synth(\harmonizer,[\amp,0]);
 
 ~noteOnFunc = {arg val, num, chan, src;
@@ -339,9 +341,35 @@ MIDIIn.bend = { arg src, chan, bend;    [chan,bend/8192].postln; };//controll th
 
 	[chan,num,val].postln;
 };
+*/
+
+MIDIdef.cc(\firstKnob,{
+	arg val, num, chan, src;
+	[val/127,chan].postln;
+	//~revDryWetKnob.set();
+	~rev.set(\wetR, val/127);
+	//postln("the rev dryWet: " + val/127);
+}, ccNum: 1, chan: 0);
+
+MIDIdef.noteOn(\firstPad,{
+	arg val, num, chan, src;
+
+		postln('you press the first pad!');
+
+},noteNum: 36);
+
+
+/*
+	c= MIDIFunc.cc({
+		arg val, num, chan, src;
+
+		[chan,num,val].postln;
+	postln('Moving the first knob')
+
+	}, ccNum: 1, chan:0,);
+
 
 // assign the function to the note on message
-
 a = MIDIFunc.noteOn(func:~noteOnFunc);
 
 //note off function
@@ -353,7 +381,7 @@ a = MIDIFunc.noteOn(func:~noteOnFunc);
 b = MIDIFunc.noteOff(func:~noteOffFunc);
 
 q = {a.free; b.free};
-
+*/
 )
 
 (
