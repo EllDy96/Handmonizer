@@ -120,40 +120,18 @@ SynthDef.new(\voiceTracker, {
 
 SynthDef.new(\harmonizer, {
 	|
-	inputBus, inFreqBus, inMidi
-	key = 3, scaleType = 0
+	inputBus, inFreqBus
     outHarmBus, outVoiceBus
-	buffer1, buffer2, buffer3
-	amph = 1, ampLow = 1, ampHigh = 1
+	amph = 1
 	amp4Up = 1, amp5Up = 1, amp7Up = 1, amp4Low = 1, amp5Low = 1, amp7Low=1
-	pitch1 = 0, pitch2 = 0, pitch3 = 0
+	pitch1 = 5, pitch2 = 7, pitch3 = 10
 	|
 
 	var in = In.ar(inputBus, 1);
-	var partials, voice, harmonics;
-    var shift1, shift2, shift3;
+	var voice, harmonics;
 	var fundamental, inFreq, out;
 	var fourthUp, fifthUp, sevenUp, fourthLow, fifthLow, sevenLow;
-	var pitchRatio = In.kr(~pitchRatioControlBuses[0], 1);
-	var scaleArray;
-	var harmonic1 = 4, harmonic2 = 5, harmonic3 = 7;
-	var pitch = 0;
-	var sc_ale = In.kr(~scale[0], 1);
-	var p1 = 0, p2 = 0, p3 = 0;
 	var grains = 2;
-	var kk = 0, st = 0;
-	var midiIn = inFreqBus.cpsmidi;
-
-
-	scaleArray = MiscFuncs.getScaleIntervals.matchAt(1);
-	postln(scaleArray);
-
-	(harmonic1-1).do({arg index = 0; p1 = p1+scaleArray[index]});
-	(harmonic2-1).do({arg index = 0; p2 = p2+scaleArray[index]});
-	(harmonic3-1).do({arg index = 0; p3 = p3+scaleArray[index]});
-    postln(p1);
-	postln(p2);
-	postln(p3);
 
 	/*
 	////////// Pitch shift ratio function ///////////
@@ -166,13 +144,13 @@ SynthDef.new(\harmonizer, {
 
 	////////////// Fixed harmony ///////////////
 
-	fourthUp = ampHigh * amp4Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p1), (2.pow(1/12)).pow(p1), grainsPeriod: 2);
-    fifthUp = ampHigh * amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p2), (2.pow(1/12)).pow(p2), grainsPeriod: 2);
-	sevenUp = ampHigh * amp7Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(p3), (2.pow(1/12)).pow(p3), grainsPeriod: 2);
+	fourthUp = amp4Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch1), (2.pow(1/12)).pow(pitch1), grainsPeriod: 2);
+    fifthUp = amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch2), (2.pow(1/12)).pow(pitch2), grainsPeriod: 2);
+	sevenUp = amp7Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch3), (2.pow(1/12)).pow(pitch3), grainsPeriod: 2);
 
-	fourthLow = ampLow * amp4Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p1), 0.5*(2.pow(1/12)).pow(p1), grainsPeriod: 4);
-    fifthLow = ampLow * amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p2), 0.5*(2.pow(1/12)).pow(p2), grainsPeriod: 4);
-	sevenLow = ampLow * amp7Low  * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(p3), 0.5*(2.pow(1/12)).pow(p3), grainsPeriod: 2);
+	fourthLow = amp4Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch1), 0.5*(2.pow(1/12)).pow(pitch1), grainsPeriod: 4);
+    fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch2), 0.5*(2.pow(1/12)).pow(pitch2), grainsPeriod: 4);
+	sevenLow = amp7Low  * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch3), 0.5*(2.pow(1/12)).pow(pitch3), grainsPeriod: 2);
 
 	harmonics = Mix.new([fourthUp, fifthUp, sevenUp, fourthLow, fifthLow, sevenLow]);
 	harmonics = amph * harmonics;
@@ -354,9 +332,36 @@ MIDIdef.cc(\firstKnob,{
 MIDIdef.noteOn(\firstPad,{
 	arg val, num, chan, src;
 
-		postln('you press the first pad!');
+	postln('PATCH 1: 4 - 5 - 7m');
+	~harmonizer.set(\pitch1, 5, \pitch2, 7, \pitch3, 10);
+
 
 },noteNum: 36);
+
+MIDIdef.noteOn(\secondPad,{
+	arg val, num, chan, src;
+
+	postln('PATCH 2 : 3 - 5 - oct');
+	~harmonizer.set(\pitch1, 4, \pitch2, 7, \pitch3, 12);
+
+
+},noteNum: 37);
+
+MIDIdef.noteOn(\thirdPad,{
+	arg val, num, chan, src;
+
+	postln('PATCH 3');
+
+
+},noteNum: 37);
+
+MIDIdef.noteOn(\fourthPad,{
+	arg val, num, chan, src;
+
+	postln('PATCH 4');
+
+
+},noteNum: 37);
 
 
 /*
@@ -401,7 +406,7 @@ OSCdef('OSCreceiver',
 
 		x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
         y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-        z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
+        z_map = LinExp.ar(z,0,1,0.1,2);// mapping of the cut off lpf
 		k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
 
 

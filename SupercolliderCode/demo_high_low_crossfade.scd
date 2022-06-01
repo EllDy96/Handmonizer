@@ -383,14 +383,14 @@ OSCdef('OSCreceiver',
 
 		//postln("Amp low: " + (1-y_map) + "  Amp high: " + y_map);
 
-
-
 		if ( z_map < 0.15, {
 			~harmonizer.set(\amph, 0);
 			postln("harmony is off");
+			postln("amph : " + z_map);
 		}, {
-			~harmonizer.set(\amph, z_map.log10);
+			~harmonizer.set(\amph, z_map);
 			postln("harmony is on");
+			postln("amph : " + z_map);
 
 		});
 
