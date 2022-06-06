@@ -1,4 +1,10 @@
 
+
+
+
+
+
+
 Server.killAll
 
 ////////////////////////////////// Two voices with 4 reagions Harmonizer/////////////////////////////////////////////////////
@@ -10,7 +16,7 @@ o = Server.local.options;
 o.sampleRate = 48000;
 o.blockSize = 32;
 o.inDevice =  "ASIO : UMC ASIO Driver"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
-o.outDevice = "ASIO : UMC ASIO Driver"; //use system default audio output (change value to manually configure output)
+o.outDevice =  "ASIO : UMC ASIO Driver"; //use system default audio output (change value to manually configure output)
 s.latency = 0.01; //0.2 is SC default
 s.boot;
 )
@@ -45,6 +51,59 @@ SynthDef.new(\voiceTracker, {
 	Out.ar(outputBus, in);
 }).send(s);
 
+/*
+SynthDef.new(\pitchRatio, {
+	|
+	ratioOut
+	|
+
+	var key = 0, scaleType = 0;
+
+	var note = 47;
+
+	var a = MiscFuncs.getNoteToMidi.matchAt(key);
+	var scaleArray = MiscFuncs.getScaleIntervals.matchAt(scaleType);
+
+	var scaleMIDI = Array.fill(33, 0);
+	var diff = 0;
+
+	var i = 0, j = 0;
+	var pitch = 0;
+	var ratio = 1;
+	var targetNote;
+
+
+	while({i < 33}, {
+
+	    j = j%scaleArray.size;
+
+		diff = diff + scaleArray[j];
+
+	    scaleMIDI[i] = a + diff;
+
+	    i = i+1;
+	    j = j+1;
+	});
+
+
+   for (0, scaleMIDI.size-2, {
+	   arg k;
+	   if( note == scaleMIDI[k] , {
+			targetNote = scaleMIDI[k+2];
+			pitch = targetNote - note;
+		},
+		{
+			targetNote = note;
+		});
+   });
+
+    ratio = (2.pow(1/12)).pow(pitch);
+	postln("Pitch Ratio: " + ratio);
+
+	Out.kr(ratioOut, ratio);
+
+}).send(s);
+*/
 
 SynthDef.new(\harmonizer, {
 	|
@@ -180,75 +239,72 @@ OSCdef('OSCreceiver',
 
 /////// Pitch ratio compute ////////
 
-~key = 0;
-~scaleType = 1;
-
 (
 
+~key = 0;
+~scaleType = 0;
+~setkey = MiscFuncs.getNoteToMidi.matchAt(~key);
+~scaleArray = MiscFuncs.getScaleIntervals.matchAt(~scaleType);
 
 
-var a = MiscFuncs.getNoteToMidi.matchAt(~key);
-var scaleArray = MiscFuncs.getScaleIntervals.matchAt(~scaleType);
-var diff = 0;
-var i = 0, j = 0;
-postln("TEST");
-
-~scaleMIDI = Array.fill(33, 0);
-postln("Scale MIDI: " + ~scaleMIDI);
+var fiddle = MykFiddle.new();
+fiddle.run;
 
 
-while({i < 33}, {
 
-	j = j%scaleArray.size;
-
-	diff = diff + scaleArray[j];
-
-	~scaleMIDI[i] = a + diff;
-
-	i = i+1;
-	j = j+1;
-});
-
-postln("Scale MIDI: " + ~scaleMIDI);
-
-//to change the parameter key and scale type in real time put inside a button function this part of the code till the while
-{
-	var fiddle = MykFiddle.new();
-	fiddle.run;
-	~pitch = 0;
-	fiddle.callback_({
-		arg n;
-		var note = n.asInteger;
-
-		//var pitch = 0;
-		var ratio = 1;
-		var targetNote;
+fiddle.callback_({
+	arg n;
+	var note = n.asInteger;
 
 
-		for (0, ~scaleMIDI.size-2, {
-			arg k;
-			if(note == ~scaleMIDI[k] , {
-				targetNote = ~scaleMIDI[k+2];
-				~pitch = targetNote - note;
-				postln("In scale. Semitones : " + ~pitch);
 
-				});
-				/*
-			{
-				pitch = 7;
-				postln("Out of scale. Semitones : " + pitch);
-			});
-				*/
-		});
+	var key = 0, scaleType = 0;
 
-		postln("Semitones: " + ~pitch);
-		ratio = (2.pow(1/12)).pow(~pitch);
-		postln("Pitch Ratio: " + ratio);
+	//var a = MiscFuncs.getNoteToMidi.matchAt(key);
+	//var scaleArray = MiscFuncs.getScaleIntervals.matchAt(scaleType);
 
-		~harmonizer.set(\ratio, ratio);
+	var scaleMIDI = Array.fill(33, 0);
+	var diff = 0;
+
+	var i = 0, j = 0;
+	var pitch = 0;
+	var ratio = 1;
+	var targetNote;
+
+	postln("MIDI note: " + note);
+
+	while({i < 33}, {
+
+		j = j%~scaleArray.size;
+
+		diff = diff + ~scaleArray[j];
+
+		scaleMIDI[i] = ~setkey + diff;
+
+		i = i+1;
+		j = j+1;
 	});
 
-}.defer(1);
+
+	for (0, scaleMIDI.size-2, {
+		arg k;
+		if( note == scaleMIDI[k] , {
+			targetNote = scaleMIDI[k+2];
+			pitch = targetNote - note;
+
+		},
+		{
+			targetNote = note;
+			//pitch= 7;
+			postln("out of the scale");
+		});
+	});
+
+	ratio = (2.pow(1/12)).pow(pitch);
+	postln("Pitch Ratio: " + ratio);
+
+	~harmonizer.set(\ratio, ratio);
+});
 
 )
 
