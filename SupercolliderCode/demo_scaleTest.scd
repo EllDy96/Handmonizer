@@ -45,6 +45,7 @@ SynthDef.new(\voiceTracker, {
 	Out.ar(outputBus, in);
 }).send(s);
 
+/*
 SynthDef.new(\pitchRatio, {
 	|
 	ratioOut
@@ -65,14 +66,6 @@ SynthDef.new(\pitchRatio, {
 	var ratio = 1;
 	var targetNote;
 
-	var fiddle = MykFiddle.new();
-    fiddle.run;
-
-	fiddle.callback_({
-	    arg n;
-		note = n.asInteger;
-		postln("MIDI note: " + note);
-    });
 
 	while({i < 33}, {
 
@@ -104,11 +97,12 @@ SynthDef.new(\pitchRatio, {
 	Out.kr(ratioOut, ratio);
 
 }).send(s);
+*/
 
 SynthDef.new(\harmonizer, {
 	|
 	inputBus, inFreqBus, outHarmBus, outVoiceBus
-	ratioIn
+	ratio = 1
 	amph = 1
 	|
 
@@ -116,7 +110,6 @@ SynthDef.new(\harmonizer, {
 	var in = In.ar(inputBus, 1);
 	var grains = 2;
 	var freq = In.ar(inFreqBus, 1);
-	var ratio = In.ar(ratioIn, 1);
 
 	h = amph * PitchShiftPA.ar(in, freq, ratio, ratio, grainsPeriod: 2);
 	//h = PitchShift.ar(in, 0.2, ratio);
@@ -235,6 +228,63 @@ OSCdef('OSCreceiver',
         //Printing the OSC values:
 		postln("Mapped parameter: X: "+ x_map  + " - Y: " + y_map + " - ON/OFF: "+ z_map );
 	},"/params");
+
+)
+
+/////// Pitch ratio compute ////////
+
+(
+var fiddle = MykFiddle.new();
+fiddle.run;
+
+fiddle.callback_({
+	arg n;
+	var note = n.asInteger;
+	postln("MIDI note: " + note);
+
+	var key = 0, scaleType = 0;
+
+	var a = MiscFuncs.getNoteToMidi.matchAt(key);
+	var scaleArray = MiscFuncs.getScaleIntervals.matchAt(scaleType);
+
+	var scaleMIDI = Array.fill(33, 0);
+	var diff = 0;
+
+	var i = 0, j = 0;
+	var pitch = 0;
+	var ratio = 1;
+	var targetNote;
+
+
+	while({i < 33}, {
+
+		j = j%scaleArray.size;
+
+		diff = diff + scaleArray[j];
+
+		scaleMIDI[i] = a + diff;
+
+		i = i+1;
+		j = j+1;
+	});
+
+
+	for (0, scaleMIDI.size-2, {
+		arg k;
+		if( note == scaleMIDI[k] , {
+			targetNote = scaleMIDI[k+2];
+			pitch = targetNote - note;
+		},
+		{
+			targetNote = note;
+		});
+	});
+
+	ratio = (2.pow(1/12)).pow(pitch);
+	postln("Pitch Ratio: " + ratio);
+
+	~harmonizer.set(\ratio, ratio);
+});
 
 )
 
