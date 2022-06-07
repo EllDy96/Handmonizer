@@ -11,14 +11,15 @@ a
 //////////////////3 voices with 6 reagions Harmonizer (4th, 5th, minor 7th)///////////////////////////////////
 
 
-(
 //#1 ======INITIALIZE SC SERVER ======
+
+(
 //if server fails to start and error encountered:  try, try again...it's stubborn sometimes...
 o = Server.local.options;
 o.sampleRate = 48000;
 o.blockSize = 32;
-o.outDevice =  "ASIO : UMC ASIO Driver";
-o.inDevice = "ASIO : UMC ASIO Driver";
+o.outDevice =  "Windows WASAPI : Cassa/Cuffie (Realtek High Definition Audio)";//"ASIO : UMC ASIO Driver";
+o.inDevice = "Windows WASAPI : Gruppo microfoni (Realtek High Definition Audio)";//"ASIO : UMC ASIO Driver";
 s.latency = 0.001; //0.2 is SC default
 s.boot;
 )
@@ -146,11 +147,14 @@ SynthDef(\delayEffect, {
 	var in, delay, mixDelayed,  maxDelTime=2;
 
     in = In.ar(inputBus);
-    delay = CombL.ar(in, maxDelTime, delTime, decay);
+	highPassedSource= HPF.ar(in,200);
+
+    delay = CombL.ar(highPassedSource, maxDelTime, delTime, decay);
 	//sig = Mix([sig*(1-wetD), delay*wetD]);
 	mixDelayed = XFade2.ar(delay, in, mix);
 
-	Out.ar(outputBus,mixDelayed);
+	highPassedDelay= BHiPass.ar(mixDelayed, freq:250);
+	Out.ar(outputBus,highPassedDelay);
 }).send(s);
 
 
@@ -168,16 +172,16 @@ SynthDef.new(\reverbEffect, {
 
 	dry = 1 - wetR;
 	source = In.ar(inputBus, 1);
-	highPassedSource= HPF.ar(source,100); // first apply an high pass filter to the  input signal to make the reverbered sound more realistic
+	highPassedSource= HPF.ar(source,150); // first apply an high pass filter to the input signal to make the reverbered sound more realistic
 	//reverb = GVerb.ar(source, 20, 6, 0.5, 1, 100, dry, 0.5, 0.4);
-	reverb = GVerb.ar( highPassedSource , 15,revTime, 0.5, 1, 20, dry, 0.4, 0.3);
+	reverb = GVerb.ar( highPassedSource ,20,revTime, 0.5, 0.7 ,25, dry, 0.4, 0.3);
 
 	//mixReverbed = (reverb * wetR) + source * (1 - wetR);
 
     mixReverbed = Mix([source*(1-wetR), reverb*wetR]);
 
-
-    Out.ar(outputBus, mixReverbed);
+	highPassedReverb= BHiPass.ar(mixReverbed, freq:250);
+    Out.ar(outputBus, highPassedReverb);
 }).send(s);
 
 
@@ -249,23 +253,12 @@ SynthDef.new(\finalMix,{
 MIDIClient.init; // connects to the operating system's MIDI layer, print the lists of available MIDI sources and destinations.
 MIDIIn.connectAll;
 
-//MIDIIn.control = { arg src, chan, num, val;   [chan,num,val/127].postln; };//to map the knob
-//MIDIIn.bend = { arg src, chan, bend;    [chan,bend/8192].postln; };//controll the pitch well
 
 
 
-/*
-~monoNote= Synth(\harmonizer,[\amp,0]);
 
-~noteOnFunc = {arg val, num, chan, src;
-
-
-	~monoNote.set(\freq, num.midicps,\amp, val/127);// val/127 because we need an amplitude controller, thus the amp to go from 0 to 1
-
-
-	[chan,num,val].postln;
-};
-*/
+//////////////////////////////////////////////////////Kbobs///////////////////////////////////////////////
+//Reverb dry/wet knob
 
 MIDIdef.cc(\firstKnob,{
 	arg val, num, chan, src;
@@ -275,6 +268,61 @@ MIDIdef.cc(\firstKnob,{
 	//postln("the rev dryWet: " + val/127);
 }, ccNum: 1, chan: 0);
 
+//Delay dry/wet
+
+MIDIdef.cc(\secondKnob,{
+	arg val, num, chan, src;
+	[val/127,chan].postln;
+
+	~dl.set(\mix, val/127);
+	//postln("the rev dryWet: " + val/127);
+}, ccNum: 2, chan: 0);
+
+//Delay fader
+MIDIdef.cc(\thirdKnob,{
+	arg val, num, chan, src;
+	[val/127,chan].postln;
+
+	~finalMix.set(\delFader, val/127);
+	//postln("the rev dryWet: " + val/127);
+}, ccNum: 3, chan: 0);
+//Rev fader
+MIDIdef.cc(\forthKnob,{
+	arg val, num, chan, src;
+	[val/127,chan].postln;
+
+	~finalMix.set(\revFader, val/127);
+	//postln("the rev dryWet: " + val/127);
+}, ccNum: 4, chan: 0);
+
+//delay Time
+MIDIdef.cc(\fifthKnob,{
+	arg val, num, chan, src;
+	[val/127,chan].postln;
+
+	~dl.set(\delTime, (val/127)*2); // 2 seconds is the The maximum delay time. Used to initialize the delay buffer size.
+	//postln("the rev dryWet: " + val/127);
+}, ccNum: 5, chan: 0);
+
+//delay decay Time
+MIDIdef.cc(\sixthKnob,{
+	arg val, num, chan, src;
+	[val/127,chan].postln;
+
+	~dl.set(\decay, (val/127)*4); // 4 second is the the maximum decay time.
+
+}, ccNum: 5, chan: 0);
+
+//rev Time
+MIDIdef.cc(\sixthKnob,{
+	arg val, num, chan, src;
+	[val/127,chan].postln;
+
+	~rev.set(\revTime, (val/127)*4); // 4 second is the the maximum rev Time.
+
+}, ccNum: 6, chan: 0);
+
+//////////////////////////////////PAD////////////////////////////////
 MIDIdef.noteOn(\firstPad,{
 	arg val, num, chan, src;
 
@@ -311,29 +359,6 @@ MIDIdef.noteOn(\fourthPad,{
 },noteNum: 39);
 
 
-/*
-	c= MIDIFunc.cc({
-		arg val, num, chan, src;
-
-		[chan,num,val].postln;
-	postln('Moving the first knob')
-
-	}, ccNum: 1, chan:0,);
-
-
-// assign the function to the note on message
-a = MIDIFunc.noteOn(func:~noteOnFunc);
-
-//note off function
-~noteOffFunc = {arg val, num, chan, src;
-	~monoNote.set(\amp,0);
-
-};
-
-b = MIDIFunc.noteOff(func:~noteOffFunc);
-
-q = {a.free; b.free};
-*/
 )
  ~threezones= 1
 (
