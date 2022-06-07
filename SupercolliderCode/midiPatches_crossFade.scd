@@ -3,12 +3,8 @@
 Server.killAll
 
 
-(
-s.scope; // plotting the wave in time domain
-FreqScope.new; // ploting the spectogram
-a
-)
-//////////////////3 voices with 6 reagions Harmonizer (4th, 5th, minor 7th)///////////////////////////////////
+
+//////////////////ENJOY THE HANDMONIZER///////////////////////////////////
 
 (
 {
@@ -145,13 +141,15 @@ s.waitForBoot{
 			var in, delay, mixDelayed,  maxDelTime=2;
 
 			in = In.ar(inputBus);
-			delay = CombL.ar(in, maxDelTime, delTime, decay);
+			highPassedSource= HPF.ar(in,200);
+
+			delay = CombL.ar(highPassedSource, maxDelTime, delTime, decay);
 			//sig = Mix([sig*(1-wetD), delay*wetD]);
 			mixDelayed = XFade2.ar(delay, in, mix);
 
-			Out.ar(outputBus,mixDelayed);
+			highPassedDelay= BHiPass.ar(mixDelayed, freq:250);
+			Out.ar(outputBus,highPassedDelay);
 		}).send(s);
-
 
 		SynthDef.new(\reverbEffect, {
 			|
@@ -167,16 +165,16 @@ s.waitForBoot{
 
 			dry = 1 - wetR;
 			source = In.ar(inputBus, 1);
-			highPassedSource= HPF.ar(source,100); // first apply an high pass filter to the  input signal to make the reverbered sound more realistic
+			highPassedSource= HPF.ar(source,150); // first apply an high pass filter to the input signal to make the reverbered sound more realistic
 			//reverb = GVerb.ar(source, 20, 6, 0.5, 1, 100, dry, 0.5, 0.4);
-			reverb = GVerb.ar( highPassedSource , 15,revTime, 0.5, 1, 20, dry, 0.4, 0.3);
+			reverb = GVerb.ar( highPassedSource ,20,revTime, 0.5, 0.7 ,25, dry, 0.4, 0.3);
 
 			//mixReverbed = (reverb * wetR) + source * (1 - wetR);
 
 			mixReverbed = Mix([source*(1-wetR), reverb*wetR]);
 
-
-			Out.ar(outputBus, mixReverbed);
+			highPassedReverb= BHiPass.ar(mixReverbed, freq:250);
+			Out.ar(outputBus, highPassedReverb);
 		}).send(s);
 
 
@@ -248,6 +246,9 @@ s.waitForBoot{
 		MIDIIn.connectAll;
 		NetAddr("127.0.0.1",57120);
 
+		//////////////////////////////////////////////////////Kbobs///////////////////////////////////////////////
+		//Reverb dry/wet knob
+
 		MIDIdef.cc(\firstKnob,{
 			arg val, num, chan, src;
 			[val/127,chan].postln;
@@ -255,6 +256,62 @@ s.waitForBoot{
 			~rev.set(\wetR, val/127);
 			//postln("the rev dryWet: " + val/127);
 		}, ccNum: 1, chan: 0);
+
+		//Delay dry/wet
+
+		MIDIdef.cc(\secondKnob,{
+			arg val, num, chan, src;
+			[val/127,chan].postln;
+
+			~dl.set(\mix, val/127);
+			//postln("the rev dryWet: " + val/127);
+		}, ccNum: 2, chan: 0);
+
+		//Delay fader
+		MIDIdef.cc(\thirdKnob,{
+			arg val, num, chan, src;
+			[val/127,chan].postln;
+
+			~finalMix.set(\delFader, val/127);
+			//postln("the rev dryWet: " + val/127);
+		}, ccNum: 3, chan: 0);
+		//Rev fader
+		MIDIdef.cc(\forthKnob,{
+			arg val, num, chan, src;
+			[val/127,chan].postln;
+
+			~finalMix.set(\revFader, val/127);
+			//postln("the rev dryWet: " + val/127);
+		}, ccNum: 4, chan: 0);
+
+		//delay Time
+		MIDIdef.cc(\fifthKnob,{
+			arg val, num, chan, src;
+			[val/127,chan].postln;
+
+			~dl.set(\delTime, (val/127)*2); // 2 seconds is the The maximum delay time. Used to initialize the delay buffer size.
+			//postln("the rev dryWet: " + val/127);
+		}, ccNum: 5, chan: 0);
+
+		//delay decay Time
+		MIDIdef.cc(\sixthKnob,{
+			arg val, num, chan, src;
+			[val/127,chan].postln;
+
+			~dl.set(\decay, (val/127)*4); // 4 second is the the maximum decay time.
+
+		}, ccNum: 6, chan: 0);
+
+		//rev Time
+		MIDIdef.cc(\sixthKnob,{
+			arg val, num, chan, src;
+			[val/127,chan].postln;
+
+			~rev.set(\revTime, (val/127)*4); // 4 second is the the maximum rev Time.
+
+		}, ccNum: 7, chan: 0);
+
+		//////////////////////////////////////PADS/////////////////////////////////////////
 
 		MIDIdef.noteOn(\firstPad,{
 			arg val, num, chan, src;

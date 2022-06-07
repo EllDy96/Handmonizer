@@ -38,16 +38,16 @@ ServerOptions.outDevices;
 
 (
 SynthDef.new(\voiceTracker, {
-    |
-    outputBus, outFreqBus, outMidi
-    |
+	|
+	outputBus, outFreqBus, outMidi
+	|
 
-    var in, amp, freq, hasFreq, out;
+	var in, amp, freq, hasFreq, out;
 	var midiFundamental;
 	var inputAmp,threshhold,gate;
 
 
-    in = Mix.new(SoundIn.ar([0,1]));
+	in = Mix.new(SoundIn.ar([0,1]));
 
 	/////////////Noise-Gate//////////////
 	inputAmp = Amplitude.kr(in);//traking the input amplitude
@@ -61,14 +61,14 @@ SynthDef.new(\voiceTracker, {
 
 
 	//Out.kr(outMidi, midiFundamental);
-    Out.kr(outFreqBus, freq);
+	Out.kr(outFreqBus, freq);
 	Out.ar(outputBus, in);
 }).send(s);
 
 SynthDef.new(\harmonizer, {
 	|
 	inputBus, inFreqBus
-    outHarmBus, outVoiceBus
+	outHarmBus, outVoiceBus
 	amph = 1
 	amp4Up = 1, amp5Up = 1, amp7Up = 1, amp4Low = 1, amp5Low = 1, amp7Low=1
 	pitch1 = 5, pitch2 = 7, pitch3 = 10
@@ -87,22 +87,22 @@ SynthDef.new(\harmonizer, {
 	//postln("Pitch ratio :" + p1);
 
 	//h1 = PitchShiftPA.ar(in, inFreqBus, p1, p1, grainsPeriod: 3);
-    */
+	*/
 
 	////////////// Fixed harmony ///////////////
 
 	fourthUp = amp4Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch1), (2.pow(1/12)).pow(pitch1), grainsPeriod: 2);
-    fifthUp = amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch2), (2.pow(1/12)).pow(pitch2), grainsPeriod: 2);
+	fifthUp = amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch2), (2.pow(1/12)).pow(pitch2), grainsPeriod: 2);
 	sevenUp = amp7Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch3), (2.pow(1/12)).pow(pitch3), grainsPeriod: 2);
 
 	fourthLow = amp4Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch1), 0.5*(2.pow(1/12)).pow(pitch1), grainsPeriod: 4);
-    fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch2), 0.5*(2.pow(1/12)).pow(pitch2), grainsPeriod: 4);
+	fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch2), 0.5*(2.pow(1/12)).pow(pitch2), grainsPeriod: 4);
 	sevenLow = amp7Low  * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch3), 0.5*(2.pow(1/12)).pow(pitch3), grainsPeriod: 2);
 
 	harmonics = Mix.new([fourthUp, fifthUp, sevenUp, fourthLow, fifthLow, sevenLow]);
 	harmonics = amph * harmonics;
 
-    Out.ar(outVoiceBus, in);
+	Out.ar(outVoiceBus, in);
 	Out.ar(outHarmBus, harmonics);
 }).send(s);
 
@@ -110,16 +110,16 @@ SynthDef.new(\harmonizer, {
 /////////////////////////////////////////////////FINAL MIX/////////////////////////////////////////////
 
 SynthDef.new(\finalSum, {
-    |
-    inputVoiceBus, inputHarmBus, outputBus, mix = -0.5
-    |
+	|
+	inputVoiceBus, inputHarmBus, outputBus, mix = -0.5
+	|
 
 	var input, harmonics;
-    var out;
+	var out;
 
 	var add;
-    var delay;
-    var mixDelayed;
+	var delay;
+	var mixDelayed;
 
 	input = In.ar(inputVoiceBus, 1);
 	harmonics = In.ar(inputHarmBus, 1);
@@ -142,14 +142,14 @@ SynthDef.new(\finalSum, {
 //// Check the effect in parallel instead that in Cascade
 SynthDef(\delayEffect, {
 	|
-    inputBus, outputBus, mix= 0.5, delTime=0.5, decay=2 //wetD = 0.5
-    |
+	inputBus, outputBus, mix= 0.5, delTime=0.5, decay=2 //wetD = 0.5
+	|
 	var in, delay, mixDelayed,  maxDelTime=2;
 
-    in = In.ar(inputBus);
+	in = In.ar(inputBus);
 	highPassedSource= HPF.ar(in,200);
 
-    delay = CombL.ar(highPassedSource, maxDelTime, delTime, decay);
+	delay = CombL.ar(highPassedSource, maxDelTime, delTime, decay);
 	//sig = Mix([sig*(1-wetD), delay*wetD]);
 	mixDelayed = XFade2.ar(delay, in, mix);
 
@@ -159,14 +159,14 @@ SynthDef(\delayEffect, {
 
 
 SynthDef.new(\reverbEffect, {
-    |
-    inputBus, outputBus, wetR = 0.5, revTime= 4
-    |
+	|
+	inputBus, outputBus, wetR = 0.5, revTime= 4
+	|
 
-    // room size
-    var source;
-    var reverb;
-    var mixReverbed;
+	// room size
+	var source;
+	var reverb;
+	var mixReverbed;
 	var dry;
 	var highPassedSource;
 
@@ -178,10 +178,10 @@ SynthDef.new(\reverbEffect, {
 
 	//mixReverbed = (reverb * wetR) + source * (1 - wetR);
 
-    mixReverbed = Mix([source*(1-wetR), reverb*wetR]);
+	mixReverbed = Mix([source*(1-wetR), reverb*wetR]);
 
 	highPassedReverb= BHiPass.ar(mixReverbed, freq:250);
-    Out.ar(outputBus, highPassedReverb);
+	Out.ar(outputBus, highPassedReverb);
 }).send(s);
 
 
@@ -311,7 +311,7 @@ MIDIdef.cc(\sixthKnob,{
 
 	~dl.set(\decay, (val/127)*4); // 4 second is the the maximum decay time.
 
-}, ccNum: 5, chan: 0);
+}, ccNum: 6, chan: 0);
 
 //rev Time
 MIDIdef.cc(\sixthKnob,{
@@ -320,7 +320,7 @@ MIDIdef.cc(\sixthKnob,{
 
 	~rev.set(\revTime, (val/127)*4); // 4 second is the the maximum rev Time.
 
-}, ccNum: 6, chan: 0);
+}, ccNum: 7, chan: 0);
 
 //////////////////////////////////PAD////////////////////////////////
 MIDIdef.noteOn(\firstPad,{
@@ -357,10 +357,10 @@ MIDIdef.noteOn(\fourthPad,{
 
 
 },noteNum: 39);
-
+f
 
 )
- ~threezones= 1
+~threezones= 1
 (
 
 NetAddr("127.0.0.1",57120);
@@ -372,59 +372,59 @@ OSCdef('OSCreceiver',
 
 		x = msg[1]; // x centroid  -> feedback     ->the sphere radius
 		y = msg[2];//  y  centroid -> index        ->the spere rays
-        z = msg[3];// palm length  -> LPF cut-off  ->the double squares
+		z = msg[3];// palm length  -> LPF cut-off  ->the double squares
 		k = msg[4];// palm slope   -> Reverb amount->the square magnitude
 
 
 		x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
-        y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-        z_map = LinExp.ar(z,0,1,0.1,2);// mapping of the cut off lpf
+		y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
+		z_map = LinExp.ar(z,0,1,0.1,2);// mapping of the cut off lpf
 		k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
 
 		if( ~threezones == 1,{
 			postln("we have fucked superCollider");
 		},
 		{
-		if(x_map < 1,
+			if(x_map < 1,
 
-			{
-				postln("we have been fucked by superCollider");
-				if(y_map < 0.5,
-					{
-						~harmonizer.set(\amp4Up, 0, \amp5Up, 0, \amp4Low, 0.7, \amp5Low, 0, \amp7Low, 0, \amp7Up, 0);
-						postln("fourth low");
+				{
+					postln("we have been fucked by superCollider");
+					if(y_map < 0.5,
+						{
+							~harmonizer.set(\amp4Up, 0, \amp5Up, 0, \amp4Low, 0.7, \amp5Low, 0, \amp7Low, 0, \amp7Up, 0);
+							postln("fourth low");
+						},
+						{
+							~harmonizer.set(\amp4Up, 0.5, \amp5Up, 0, \amp4Low, 0, \amp5Low, 0, \amp7Low, 0, \amp7Up, 0);
+							postln("fourth high");
+					});
 				},
-					{
-						~harmonizer.set(\amp4Up, 0.5, \amp5Up, 0, \amp4Low, 0, \amp5Low, 0, \amp7Low, 0, \amp7Up, 0);
-						postln("fourth high");
-				});
-			},
-			{
-				if(x_map < 2, {
+				{
+					if(x_map < 2, {
 
-				if(y_map < 0.5,
+						if(y_map < 0.5,
+							{
+								~harmonizer.set(\amp4Up, 0, \amp5Up, 0, \amp4Low, 0.7, \amp5Low, 0.7, \amp7Low, 0, \amp7Up, 0);
+								postln("fourth and fifth low");
+							},
+							{
+								~harmonizer.set(\amp4Up, 0.5, \amp5Up, 0.5, \amp4Low, 0, \amp5Low, 0, \amp7Low, 0, \amp7Up, 0);
+								postln("fourth and fifth up");
+						});
+					},
 					{
-						~harmonizer.set(\amp4Up, 0, \amp5Up, 0, \amp4Low, 0.7, \amp5Low, 0.7, \amp7Low, 0, \amp7Up, 0);
-						postln("fourth and fifth low");
-				},
-					{
-						~harmonizer.set(\amp4Up, 0.5, \amp5Up, 0.5, \amp4Low, 0, \amp5Low, 0, \amp7Low, 0, \amp7Up, 0);
-						postln("fourth and fifth up");
-				});
-			},
-			{
-				if(y_map < 0.5,
-					{
-						~harmonizer.set(\amp4Up, 0, \amp5Up, 0, \amp4Low, 0.7, \amp5Low, 0.7, \amp7Low, 0.7, \amp7Up, 0);
-						postln("three voices low");
-				},
-					{
-						~harmonizer.set(\amp4Up, 0.5, \amp5Up, 0.5, \amp4Low, 0, \amp5Low, 0, \amp7Low, 0, \amp7Up, 0.5);
-						postln("three voices up");
-				});
-		})});
+						if(y_map < 0.5,
+							{
+								~harmonizer.set(\amp4Up, 0, \amp5Up, 0, \amp4Low, 0.7, \amp5Low, 0.7, \amp7Low, 0.7, \amp7Up, 0);
+								postln("three voices low");
+							},
+							{
+								~harmonizer.set(\amp4Up, 0.5, \amp5Up, 0.5, \amp4Low, 0, \amp5Low, 0, \amp7Low, 0, \amp7Up, 0.5);
+								postln("three voices up");
+						});
+			})});
 
-	});
+		});
 		~harmonizer.set(\ampLow, 1-y_map, \ampHigh, y_map);
 
 		postln("Amp low: " + (1-y_map) + "  Amp high: " + y_map);
@@ -446,14 +446,14 @@ OSCdef('OSCreceiver',
 
 		},
 		{
-		~dl.set(\mix, k_map);
+			~dl.set(\mix, k_map);
 		});
 
 
 
-        //Printing the OSC values:
+		//Printing the OSC values:
 		postln("Mapped parameter: X: "+ x_map  + " - Y: " + y_map + " - ON/OFF: "+ z_map + " - Delay mix : " + k_map);
-	},"/params");
+},"/params");
 
 )
 
@@ -463,32 +463,32 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 
 
 ~decaySlider = EZSlider(
-					parent: w,
-					bounds: Rect(85,100 , 300, 20),
-					label: "Delay Decay",
-					controlSpec: ControlSpec(minval: 1, maxval: 10, warp: \lin, step: 1, units:\Decay),
-	                action: {arg thisSlider; ~dl.set(\decay, thisSlider.value)},
-					initVal: 2,
-					initAction: true,
-					labelWidth: 100,
-					numberWidth: 60,
-					unitWidth: 45,
-					labelHeight: 20,
-				);
+	parent: w,
+	bounds: Rect(85,100 , 300, 20),
+	label: "Delay Decay",
+	controlSpec: ControlSpec(minval: 1, maxval: 10, warp: \lin, step: 1, units:\Decay),
+	action: {arg thisSlider; ~dl.set(\decay, thisSlider.value)},
+	initVal: 2,
+	initAction: true,
+	labelWidth: 100,
+	numberWidth: 60,
+	unitWidth: 45,
+	labelHeight: 20,
+);
 
 ~delTimeSlider = EZSlider(
-					parent: w,
-					bounds: Rect(85, 120, 300, 20),
-					label: "Delay Time",
-					controlSpec: ControlSpec(minval: 0.1, maxval: 1.9, warp: \lin, step: 0.1, units:\delTime),
-	                action: {arg thisSlider; ~dl.set(\delTime, thisSlider.value)},
-					initVal: 1,
-					initAction: true,
-					labelWidth: 100,
-					numberWidth: 60,
-					unitWidth: 45,
-					labelHeight: 20,
-				);
+	parent: w,
+	bounds: Rect(85, 120, 300, 20),
+	label: "Delay Time",
+	controlSpec: ControlSpec(minval: 0.1, maxval: 1.9, warp: \lin, step: 0.1, units:\delTime),
+	action: {arg thisSlider; ~dl.set(\delTime, thisSlider.value)},
+	initVal: 1,
+	initAction: true,
+	labelWidth: 100,
+	numberWidth: 60,
+	unitWidth: 45,
+	labelHeight: 20,
+);
 
 //////////Knob for setting the dry/wet of the Reverb //////////////////
 
@@ -510,7 +510,7 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 ~b1.string = "ON";
 ~b1.action_({
 
-    ~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut, \outFreqBus, ~fundamentalBus], ~inputGroup);
+	~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut, \outFreqBus, ~fundamentalBus], ~inputGroup);
 
 });
 
@@ -518,7 +518,7 @@ w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 ~b2.string = "OFF";
 ~b2.action_({
 
-    ~voiceTracker.free;
+	~voiceTracker.free;
 
 });
 
