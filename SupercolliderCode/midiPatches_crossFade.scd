@@ -21,7 +21,7 @@ a
 	o.inDevice = "ASIO : UMC ASIO Driver";
 	s.latency = 0.001; //0.2 is SC default
 	s.boot;
-	postln("Server section.");
+	postln("Server section status: RUNNING.");
 }.defer(1);
 
 //ServerOptions.devices;
@@ -37,7 +37,7 @@ a
 //////SYNTHS///////
 s.waitForBoot{
 	{
-		postln("Synth section.");
+		postln("Synth section status: RUNNING.");
 		SynthDef.new(\voiceTracker, {
 			|
 			outputBus, outFreqBus, outMidi
@@ -202,7 +202,7 @@ s.waitForBoot{
 	////////////////////////////////BUSES///////////////////
 
 	{
-		postln("Buses section.");
+		postln("Buses section status: RUNNING.");
 		// create the busses
 		~trackerOut = Bus.audio(s, 1);
 		~harmonizerVoice = Bus.audio(s, 1);
@@ -243,7 +243,7 @@ s.waitForBoot{
 	//Istantiation of the Midi keyboard for a monophonic synthetizer
 
 	{
-		postln("MIDI section.");
+		postln("MIDI section status: RUNNING.");
 		MIDIClient.init; // connects to the operating system's MIDI layer, print the lists of available MIDI sources and destinations.
 		MIDIIn.connectAll;
 		NetAddr("127.0.0.1",57120);
@@ -609,7 +609,7 @@ s.waitForBoot{
 
 
 	{
-		postln("GUI section.");
+		postln("GUI section status: RUNNING.");
 		Window.closeAll;
 		w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
 
@@ -711,12 +711,6 @@ s.waitForBoot{
 
 }
 )
-
-
-~dl.set(\delTime, 0.3, \decay, 1);
-
-~harmonizer.set(\pitch1, 5, \pitch2, 7, \pitch3, 10);
-~harmonizer.set(\pitch1, 4, \pitch2, 7, \pitch3, 12);
 
 
 
