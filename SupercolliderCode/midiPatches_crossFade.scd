@@ -6,6 +6,7 @@ Server.killAll
 
 //////////////////ENJOY THE HANDMONIZER///////////////////////////////////
 
+
 (
 {
 	//#1 ======INITIALIZE SC SERVER ======
@@ -13,8 +14,8 @@ Server.killAll
 	o = Server.local.options;
 	o.sampleRate = 48000;
 	o.blockSize = 32;
-	o.outDevice =  "ASIO : UMC ASIO Driver";
-	o.inDevice = "ASIO : UMC ASIO Driver";
+	o.outDevice =  "Windows WASAPI : Cassa/Cuffie (Realtek High Definition Audio)";//"ASIO : UMC ASIO Driver";
+	o.inDevice ="Windows WASAPI : Gruppo microfoni (Realtek High Definition Audio)"; //"ASIO : UMC ASIO Driver";
 	s.latency = 0.001; //0.2 is SC default
 	s.boot;
 	postln("Server section status: RUNNING.");
@@ -48,7 +49,7 @@ s.waitForBoot{
 
 			/////////////Noise-Gate//////////////
 			inputAmp = Amplitude.kr(in);//traking the input amplitude
-			threshhold = 0.02;	// noise gating threshold
+			threshhold = 0.04;	// noise gating threshold
 			gate = Lag.kr(inputAmp > threshhold, 0.01);// using Lag to smoothing out control signals.
 			in= in*gate;
 
@@ -139,6 +140,8 @@ s.waitForBoot{
 			inputBus, outputBus, mix= 0.5, delTime=0.5, decay=2 //wetD = 0.5
 			|
 			var in, delay, mixDelayed,  maxDelTime=2;
+			var highPassedDelay;
+			var highPassedSource;
 
 			in = In.ar(inputBus);
 			highPassedSource= HPF.ar(in,200);
@@ -162,15 +165,14 @@ s.waitForBoot{
 			var mixReverbed;
 			var dry;
 			var highPassedSource;
+			var highPassedReverb;
 
 			dry = 1 - wetR;
 			source = In.ar(inputBus, 1);
 			highPassedSource= HPF.ar(source,150); // first apply an high pass filter to the input signal to make the reverbered sound more realistic
-			//reverb = GVerb.ar(source, 20, 6, 0.5, 1, 100, dry, 0.5, 0.4);
+
+
 			reverb = GVerb.ar( highPassedSource ,20,revTime, 0.5, 0.7 ,25, dry, 0.4, 0.3);
-
-			//mixReverbed = (reverb * wetR) + source * (1 - wetR);
-
 			mixReverbed = Mix([source*(1-wetR), reverb*wetR]);
 
 			highPassedReverb= BHiPass.ar(mixReverbed, freq:250);
@@ -182,7 +184,7 @@ s.waitForBoot{
 
 		SynthDef.new(\finalMix,{
 			|
-			inputSignalBus, inputRevBus, inputDelBus, delFaider= 0.5, revFader= 0.5
+			inputSignalBus, inputRevBus, inputDelBus, delFader= 0.5, revFader= 0.5
 			|
 
 			var signal, rev, del,finalMix;
@@ -191,7 +193,7 @@ s.waitForBoot{
 			rev= In.ar(inputRevBus,1);
 			del= In.ar(inputDelBus,1);
 
-			finalMix= Mix.ar([signal, revFader*rev, delFaider*del]);
+			finalMix= Mix.ar([signal,revFader*rev, delFader*del]);
 
 			Out.ar([0,1], finalMix);
 
@@ -251,72 +253,77 @@ s.waitForBoot{
 
 		MIDIdef.cc(\firstKnob,{
 			arg val, num, chan, src;
-			[val/127,chan].postln;
+			[val/127,chan,num].postln;
 			//~revDryWetKnob.set();
 			~rev.set(\wetR, val/127);
-			//postln("the rev dryWet: " + val/127);
+
+			postln("the rev dryWet");
 		}, ccNum: 1, chan: 0);
 
 		//Delay dry/wet
 
 		MIDIdef.cc(\secondKnob,{
 			arg val, num, chan, src;
-			[val/127,chan].postln;
+			var delDryWet= LinLin.kr(val,0,127,-1,1);
+			[val/127,num,chan].postln;
+			postln(delDryWet);
 
-			~dl.set(\mix, val/127);
-			//postln("the rev dryWet: " + val/127);
+			~dl.set(\mix, delDryWet);
+			postln("Delay Dry wet");
 		}, ccNum: 2, chan: 0);
 
 		//Delay fader
 		MIDIdef.cc(\thirdKnob,{
 			arg val, num, chan, src;
-			[val/127,chan].postln;
+			[val/127,num,chan].postln;
 
 			~finalMix.set(\delFader, val/127);
-			//postln("the rev dryWet: " + val/127);
+			postln("Delay Fader");
 		}, ccNum: 3, chan: 0);
+
 		//Rev fader
 		MIDIdef.cc(\forthKnob,{
 			arg val, num, chan, src;
-			[val/127,chan].postln;
+			[val/127,num, chan].postln;
 
 			~finalMix.set(\revFader, val/127);
-			//postln("the rev dryWet: " + val/127);
+			postln("Rev Fader");
 		}, ccNum: 4, chan: 0);
 
 		//delay Time
 		MIDIdef.cc(\fifthKnob,{
 			arg val, num, chan, src;
-			[val/127,chan].postln;
+			[val/127,num, chan].postln;
 
 			~dl.set(\delTime, (val/127)*2); // 2 seconds is the The maximum delay time. Used to initialize the delay buffer size.
-			//postln("the rev dryWet: " + val/127);
+			postln("Delay time");
 		}, ccNum: 5, chan: 0);
 
 		//delay decay Time
 		MIDIdef.cc(\sixthKnob,{
 			arg val, num, chan, src;
-			[val/127,chan].postln;
+			[val/127,num,chan].postln;
 
 			~dl.set(\decay, (val/127)*4); // 4 second is the the maximum decay time.
-
+			postln("Delay  Decay time");
 		}, ccNum: 6, chan: 0);
 
 		//rev Time
-		MIDIdef.cc(\sixthKnob,{
+		MIDIdef.cc(\seventhKnob,{
 			arg val, num, chan, src;
-			[val/127,chan].postln;
+			[val/127,num, chan].postln;
 
 			~rev.set(\revTime, (val/127)*4); // 4 second is the the maximum rev Time.
-
+			postln("rev  Decay time");
 		}, ccNum: 7, chan: 0);
+
 
 		//////////////////////////////////////PADS/////////////////////////////////////////
 
 		MIDIdef.noteOn(\firstPad,{
 			arg val, num, chan, src;
 
-			postln('PATCH 2 : 3 - 5');
+			postln('PATCH 1 : 3 - 5');
 			~harmonizer.set(\pitch1, 4, \pitch2, 7, \pitch3, 0);
 
 			OSCdef('OSCreceiver',
@@ -378,7 +385,7 @@ s.waitForBoot{
 		MIDIdef.noteOn(\secondPad,{
 			arg val, num, chan, src;
 
-			postln('PATCH 1: 4 - 5 - 7m');
+			postln('PATCH 2: 4 - 5 - 7m');
 			~harmonizer.set(\pitch1, 5, \pitch2, 7, \pitch3, 10);
 
 			OSCdef('OSCreceiver',
@@ -552,6 +559,8 @@ s.waitForBoot{
 
 		},noteNum: 39);
 
+		///////////////////////////////////ByPass///////////////////////
+
 		MIDIdef.noteOn(\onOff,{
 			arg val, num, chan, src;
 
@@ -589,8 +598,9 @@ s.waitForBoot{
 		MIDIdef.noteOn(\delayPatch,{
 			arg val, num, chan, src;
 
-			~harmonizer.set(\amphmidi, 0);
 
+			~harmonizer.set(\amphmidi, 0);
+			postln("Delay Patch");
 			OSCdef('OSCreceiver',
 				{
 					arg msg;
@@ -609,6 +619,7 @@ s.waitForBoot{
 					z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
 					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
 
+
 					if (k_map>= 0.8,{
 						~dl.set(\mix, 1);
 						postln( "delaaaay OFF");
@@ -626,6 +637,7 @@ s.waitForBoot{
 
 		MIDIdef.noteOn(\reverbPatch,{
 			arg val, num, chan, src;
+			postln("Reverb Patch");
 
 			~harmonizer.set(\amphmidi, 0);
 
@@ -649,7 +661,7 @@ s.waitForBoot{
 
 					if (k_map>= 0.8,{
 						~rev.set(\wetR, 1);
-						postln( "delaaaay OFF");
+						postln( "Reverbd OFF");
 
 					},
 					{
@@ -746,16 +758,13 @@ s.waitForBoot{
 		});
 
 		~b3 = Button(w, Rect(180, 10, 75, 50));
-		~b3.string = "EXIT";
-		~b3.action_({Window.closeAll});
+		~b3.string = "EXIdT";
+		~b3.action_({
+			Window.closeAll;
+			~voiceTracker.free;
+		});
 
-		~b4 = Button(w, Rect(50, 150, 50, 50));
-		~b4.string = "Major";
-		~b4.action_({~scale[0].set(0)});
 
-		~b5 = Button(w, Rect(100, 150, 50, 50));
-		~b5.string = "Minor";
-		~b5.action_({~scale[0].set(1)});
 
 		/*
 		~sc = PopUpMenu(w, Rect(10, 10, 100, 30));

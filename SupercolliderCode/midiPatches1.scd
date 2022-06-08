@@ -2,12 +2,6 @@
 
 Server.killAll
 
-
-(
-s.scope; // plotting the wave in time domain
-FreqScope.new; // ploting the spectogram
-a
-)
 //////////////////3 voices with 6 reagions Harmonizer (4th, 5th, minor 7th)///////////////////////////////////
 
 
@@ -144,17 +138,17 @@ SynthDef(\delayEffect, {
 	|
 	inputBus, outputBus, mix= 0.5, delTime=0.5, decay=2 //wetD = 0.5
 	|
-	var in, delay, mixDelayed,  maxDelTime=2;
+	var in, delay, mixDelayed,  maxDelTime=2, highPassedDelay,highPassedSource;
 
 	in = In.ar(inputBus);
 	highPassedSource= HPF.ar(in,200);
 
-	delay = CombL.ar(highPassedSource, maxDelTime, delTime, decay);
+	delay = CombL.ar(in, maxDelTime, delTime, decay);
 	//sig = Mix([sig*(1-wetD), delay*wetD]);
-	mixDelayed = XFade2.ar(delay, in, mix);
+	mixDelayed = XFade2.ar(delay, highPassedSource, mix);
 
-	highPassedDelay= BHiPass.ar(mixDelayed, freq:250);
-	Out.ar(outputBus,highPassedDelay);
+	highPassedDelay= HPF.ar(mixDelayed, freq:250);
+	Out.ar(outputBus,mixDelayed);
 }).send(s);
 
 
@@ -168,20 +162,20 @@ SynthDef.new(\reverbEffect, {
 	var reverb;
 	var mixReverbed;
 	var dry;
-	var highPassedSource;
+	var highPassedSource, highPassedReverb;
 
 	dry = 1 - wetR;
 	source = In.ar(inputBus, 1);
 	highPassedSource= HPF.ar(source,150); // first apply an high pass filter to the input signal to make the reverbered sound more realistic
 	//reverb = GVerb.ar(source, 20, 6, 0.5, 1, 100, dry, 0.5, 0.4);
-	reverb = GVerb.ar( highPassedSource ,20,revTime, 0.5, 0.7 ,25, dry, 0.4, 0.3);
+	reverb = GVerb.ar( source ,20,revTime, 0.5, 0.7 ,25, dry, 0.4, 0.3);
 
 	//mixReverbed = (reverb * wetR) + source * (1 - wetR);
 
 	mixReverbed = Mix([source*(1-wetR), reverb*wetR]);
 
-	highPassedReverb= BHiPass.ar(mixReverbed, freq:250);
-	Out.ar(outputBus, highPassedReverb);
+	highPassedReverb= HPF.ar(mixReverbed, freq:250);
+	Out.ar(outputBus, mixReverbed);
 }).send(s);
 
 
@@ -357,10 +351,10 @@ MIDIdef.noteOn(\fourthPad,{
 
 
 },noteNum: 39);
-f
+
 
 )
-~threezones= 1
+
 (
 
 NetAddr("127.0.0.1",57120);
@@ -381,10 +375,7 @@ OSCdef('OSCreceiver',
 		z_map = LinExp.ar(z,0,1,0.1,2);// mapping of the cut off lpf
 		k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
 
-		if( ~threezones == 1,{
-			postln("we have fucked superCollider");
-		},
-		{
+
 			if(x_map < 1,
 
 				{
@@ -424,7 +415,6 @@ OSCdef('OSCreceiver',
 						});
 			})});
 
-		});
 		~harmonizer.set(\ampLow, 1-y_map, \ampHigh, y_map);
 
 		postln("Amp low: " + (1-y_map) + "  Amp high: " + y_map);
