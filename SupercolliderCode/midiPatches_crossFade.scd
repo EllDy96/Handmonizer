@@ -351,20 +351,21 @@ s.waitForBoot{
 
 					amp5 = 0.5*x_map;
 					amp7 = 0;
-					/*
-					if ( z_map < 0.15, {
 
-					~harmonizer.set(\amph, 0);
-					postln("harmony is off");
-					postln("amph : " + z_map);
-					}, {
-					~harmonizer.set(\amph, z_map);
-					postln("harmony is on");
-					postln("amph : " + z_map);
-
-					}); */
 					amph = a.map(z_map);
-					~harmonizer.set(\amph, amph);
+
+					if ( amph < 0.15, {
+
+						~harmonizer.set(\amph, 0);
+						postln("harmony is off");
+						postln("amph : " + z_map);
+					}, {
+						~harmonizer.set(\amph, amph);
+						postln("harmony is on");
+						postln("amph : " + z_map);
+
+					});
+
 
 					if (k_map>= 0.8,{
 						~dl.set(\mix, 1);
@@ -784,7 +785,7 @@ s.waitForBoot{
 		});
 
 		~b3 = Button(w, Rect(180, 10, 75, 50));
-		~b3.string = "EXIdT";
+		~b3.string = "EXIT";
 		~b3.action_({
 			Window.closeAll;
 			~voiceTracker.free;
