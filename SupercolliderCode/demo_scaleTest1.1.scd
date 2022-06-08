@@ -15,8 +15,8 @@ Server.killAll
 o = Server.local.options;
 o.sampleRate = 48000;
 o.blockSize = 32;
-o.inDevice =  "ASIO : UMC ASIO Driver"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
-o.outDevice =  "ASIO : UMC ASIO Driver"; //use system default audio output (change value to manually configure output)
+o.inDevice = nil;   //"ASIO : UMC ASIO Driver"; //"MME : Gruppo microfoni (Realtek High"; //use system default audio input (change value to manually configure input)
+o.outDevice = nil; //"ASIO : UMC ASIO Driver"; //use system default audio output (change value to manually configure output)
 s.latency = 0.01; //0.2 is SC default
 s.boot;
 )
@@ -241,10 +241,9 @@ OSCdef('OSCreceiver',
 
 (
 
-~key = 0;
-~scaleType = 0;
-~setkey = MiscFuncs.getNoteToMidi.matchAt(~key);
-~scaleArray = MiscFuncs.getScaleIntervals.matchAt(~scaleType);
+var key = 0, scaleType = 1;
+var setkey = MiscFuncs.getNoteToMidi.matchAt(key);
+var scaleArray = MiscFuncs.getScaleIntervals.matchAt(scaleType);
 
 
 var fiddle = MykFiddle.new();
@@ -264,6 +263,7 @@ fiddle.callback_({
 	//var scaleArray = MiscFuncs.getScaleIntervals.matchAt(scaleType);
 
 	var scaleMIDI = Array.fill(33, 0);
+
 	var diff = 0;
 
 	var i = 0, j = 0;
@@ -275,11 +275,11 @@ fiddle.callback_({
 
 	while({i < 33}, {
 
-		j = j%~scaleArray.size;
+		j = j%scaleArray.size;
 
-		diff = diff + ~scaleArray[j];
+		diff = diff + scaleArray[j];
 
-		scaleMIDI[i] = ~setkey + diff;
+		scaleMIDI[i] = setkey + diff;
 
 		i = i+1;
 		j = j+1;

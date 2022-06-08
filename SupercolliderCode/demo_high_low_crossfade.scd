@@ -29,62 +29,6 @@ ServerOptions.outDevices;
 
 
 
-///////////////////////////////////// MODEL ////////////////////////////////////////////////////
-
-(
-
-~pitchRatioControlBuses = Array.fill(1, {arg i; Bus.control(s, 1)});
-
-~scale = Array.fill(1, {arg i; Bus.control(s, 1)});
-
-)
-
-////pitch ratio function////
-(
-
-~pitchRatioCompute = {
-	|
-	key
-	scaleType
-	note
-	|
-
-	var a = MiscFuncs.getNoteToMidi.matchAt(key);
-	var scaleArray = MiscFuncs.getScaleIntervals.matchAt(scaleType);
-
-	var scaleMIDI = Array.fill(33, 0);
-	var diff = 0;
-
-	var i = 0, j = 0;
-	var pitch = 1;
-	var ratio = 1;
-
-	while({i < 33}, {
-
-	    j = j%scaleArray.size;
-
-		diff = diff + scaleArray[j];
-
-	    scaleMIDI[i] = a + diff;
-
-	    i = i+1;
-	    j = j+1;
-	});
-
-
-
-   for (0, scaleMIDI.size-2, {
-	   arg k;
-	   if( note == scaleMIDI[k] , {
-	   	  pitch = scaleMIDI[k+2] - scaleMIDI[k] ;
-		}, {pitch = 0;});
-});
-
-
-ratio = (2.pow(1/12)).pow(pitch);
-};
-
-)
 
 //////SYNTHS///////
 
@@ -149,14 +93,6 @@ SynthDef.new(\harmonizer, {
 	postln(p2);
 	postln(p3);
 
-	/*
-	////////// Pitch shift ratio function ///////////
-
-	//p1 = ~pitchRatioCompute.value(kk, st);
-	//postln("Pitch ratio :" + p1);
-
-	//h1 = PitchShiftPA.ar(in, inFreqBus, p1, p1, grainsPeriod: 3);
-    */
 
 	////////////// Fixed harmony ///////////////
 

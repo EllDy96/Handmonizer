@@ -333,6 +333,8 @@ s.waitForBoot{
 					var x_map, y_map, z_map, k_map, amp, amp1;
 					var high_low_mix;
 					var amp5, amp7;
+					var a = \db.asWarp;
+					var amph;
 
 					x = msg[1]; // x centroid  -> feedback     ->the sphere radius
 					y = msg[2];//  y  centroid -> index        ->the spere rays
@@ -349,17 +351,20 @@ s.waitForBoot{
 
 					amp5 = 0.5*x_map;
 					amp7 = 0;
-
+					/*
 					if ( z_map < 0.15, {
-						~harmonizer.set(\amph, 0);
-						postln("harmony is off");
-						postln("amph : " + z_map);
-					}, {
-						~harmonizer.set(\amph, z_map);
-						postln("harmony is on");
-						postln("amph : " + z_map);
 
-					});
+					~harmonizer.set(\amph, 0);
+					postln("harmony is off");
+					postln("amph : " + z_map);
+					}, {
+					~harmonizer.set(\amph, z_map);
+					postln("harmony is on");
+					postln("amph : " + z_map);
+
+					}); */
+					amph = a.map(z_map);
+					~harmonizer.set(\amph, amph);
 
 					if (k_map>= 0.8,{
 						~dl.set(\mix, 1);
@@ -396,6 +401,8 @@ s.waitForBoot{
 					var x_map, y_map, z_map, k_map, amp, amp1;
 					var high_low_mix;
 					var amp5, amp7;
+					var a = \db.asWarp;
+					var amph;
 
 					x = msg[1]; // x centroid  -> feedback     ->the sphere radius
 					y = msg[2];//  y  centroid -> index        ->the spere rays
@@ -412,17 +419,19 @@ s.waitForBoot{
 
 					amp5 = 0.5*x_map;
 					amp7 = 0.33*x_map;
-
+					/*
 					if ( z_map < 0.15, {
-						~harmonizer.set(\amph, 0);
-						postln("harmony is off");
-						postln("amph : " + z_map);
+					~harmonizer.set(\amph, 0);
+					postln("harmony is off");
+					postln("amph : " + z_map);
 					}, {
-						~harmonizer.set(\amph, z_map);
-						postln("harmony is on");
-						postln("amph : " + z_map);
+					~harmonizer.set(\amph, z_map);
+					postln("harmony is on");
+					postln("amph : " + z_map);
 
-					});
+					});*/
+					amph = a.map(z_map);
+					~harmonizer.set(\amph, amph);
 
 					if (k_map>= 0.8,{
 						~dl.set(\mix, 1);
@@ -459,6 +468,8 @@ s.waitForBoot{
 					var x_map, y_map, z_map, k_map, amp, amp1;
 					var high_low_mix;
 					var amp5, amp7;
+					var a = \db.asWarp;
+					var amph;
 
 					x = msg[1]; // x centroid  -> feedback     ->the sphere radius
 					y = msg[2];//  y  centroid -> index        ->the spere rays
@@ -475,17 +486,19 @@ s.waitForBoot{
 
 					amp5 = 0.5*x_map;
 					amp7 = 0.33*x_map;
-
+					/*
 					if ( z_map < 0.15, {
-						~harmonizer.set(\amph, 0);
-						postln("harmony is off");
-						postln("amph : " + z_map);
+					~harmonizer.set(\amph, 0);
+					postln("harmony is off");
+					postln("amph : " + z_map);
 					}, {
-						~harmonizer.set(\amph, z_map);
-						postln("harmony is on");
-						postln("amph : " + z_map);
+					~harmonizer.set(\amph, z_map);
+					postln("harmony is on");
+					postln("amph : " + z_map);
 
-					});
+					}); */
+					amph = a.map(z_map);
+					~harmonizer.set(\amph, amph);
 
 					if (k_map>= 0.8,{
 						~dl.set(\mix, 1);
@@ -525,6 +538,8 @@ s.waitForBoot{
 					var x_map, y_map, z_map, k_map, amp, amp1;
 					var high_low_mix;
 					var amp5, amp7;
+					var a = \db.asWarp;
+					var amph;
 
 					x = msg[1]; // x centroid  -> feedback     ->the sphere radius
 					y = msg[2];//  y  centroid -> index        ->the spere rays
@@ -536,17 +551,19 @@ s.waitForBoot{
 					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
 					z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
 					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
-
+					/*
 					if ( z_map < 0.15, {
-						~harmonizer.set(\amph, 0);
-						postln("harmony is off");
-						postln("amph : " + z_map);
+					~harmonizer.set(\amph, 0);
+					postln("harmony is off");
+					postln("amph : " + z_map);
 					}, {
-						~harmonizer.set(\amph, z_map);
-						postln("harmony is on");
-						postln("amph : " + z_map);
+					~harmonizer.set(\amph, z_map);
+					postln("harmony is on");
+					postln("amph : " + z_map);
 
-					});
+					});*/
+					amph = a.map(z_map);
+					~harmonizer.set(\amph, amph);
 
 					if (k_map>= 0.8,{
 						~dl.set(\mix, 1);
