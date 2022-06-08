@@ -62,16 +62,17 @@ s.waitForBoot{
 
 			////////////// Fixed harmony ///////////////
 
-			fourthUp = amp4Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch1), (2.pow(1/12)).pow(pitch1), grainsPeriod: 2);
-			fifthUp = amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch2), (2.pow(1/12)).pow(pitch2), grainsPeriod: 2);
-			sevenUp = amp7Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch3), (2.pow(1/12)).pow(pitch3), grainsPeriod: 2);
+			fourthUp = amp4Up * PitchShiftPA.ar(in, inFreqBus, pitch1, pitch1, grainsPeriod: 2);
+			fifthUp = amp5Up * PitchShiftPA.ar(in, inFreqBus, pitch2, pitch2, grainsPeriod: 2);
+			sevenUp = amp7Up * PitchShiftPA.ar(in, inFreqBus, pitch3, pitch3, grainsPeriod: 2);
 
-			fourthLow = amp4Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch1), 0.5*(2.pow(1/12)).pow(pitch1), grainsPeriod: 4);
-			fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch2), 0.5*(2.pow(1/12)).pow(pitch2), grainsPeriod: 4);
-			sevenLow = amp7Low  * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch3), 0.5*(2.pow(1/12)).pow(pitch3), grainsPeriod: 2);
+			fourthLow = amp4Low * PitchShiftPA.ar(in, inFreqBus, 0.5*pitch1, 0.5*pitch1, grainsPeriod: 4);
+			fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*pitch2, 0.5*pitch2, grainsPeriod: 4);
+			sevenLow = amp7Low  * PitchShiftPA.ar(in, inFreqBus, 0.5*pitch3, 0.5*pitch3, grainsPeriod: 2);
 
 			high_harm = Mix.new([fourthUp, fifthUp, sevenUp]);
 			low_harm = Mix.new([fourthLow, fifthLow, sevenLow]);
+
 
 			//harmonics = Mix.new([fourthUp, fifthUp, sevenUp, fourthLow, fifthLow, sevenLow]);
 
@@ -216,8 +217,8 @@ s.waitForBoot{
 
 	/////// Pitch ratio compute ////////
 	{
-		~key = 0;
-		~scaleType = 1;
+		~key = 3;
+		~scaleType = 0;
 	}.defer(9);
 
 	{
@@ -259,7 +260,6 @@ s.waitForBoot{
 			arg n;
 			var note = n.asInteger;
 
-			//var pitch = 0;
 			var ratio1 = 1, ratio2 = 1, ratio3 = 1;
 			var tn1, tn2, tn3;
 
@@ -294,7 +294,7 @@ s.waitForBoot{
 		});
 
 	}.defer(11);
-
+/*
 
 	{
 		postln("MIDI section status: RUNNING.");
@@ -464,7 +464,7 @@ s.waitForBoot{
 
 	}.defer(13)
 
-
+*/
 	{
 		postln("GUI section status : RUNNING");
 
