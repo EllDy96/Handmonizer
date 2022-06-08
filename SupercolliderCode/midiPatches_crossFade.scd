@@ -372,7 +372,7 @@ s.waitForBoot{
 
 					~harmonizer.set(\amp5Up, amp5, \amp5Low, amp5);
 					~harmonizer.set(\amp7Up, amp7, \amp7Low, amp7);
-					postln("AMP 5 : " + amp5, "  AMP 7 : " + amp7);
+					postln("AMP 5 : " + amp5 + "  AMP 7 : " + amp7);
 
 					~harmonizer.set(\high_low_mix, high_low_mix);
 					postln("High & Low Mix : " + high_low_mix);
@@ -435,7 +435,7 @@ s.waitForBoot{
 
 					~harmonizer.set(\amp5Up, amp5, \amp5Low, amp5);
 					~harmonizer.set(\amp7Up, amp7, \amp7Low, amp7);
-					postln("AMP 5 : " + amp5, "  AMP 7 : " + amp7);
+					postln("AMP 5 : " + amp5 + "  AMP 7 : " + amp7);
 
 					~harmonizer.set(\high_low_mix, high_low_mix);
 					postln("High & Low Mix : " + high_low_mix);
@@ -498,7 +498,7 @@ s.waitForBoot{
 
 					~harmonizer.set(\amp5Up, amp5, \amp5Low, amp5);
 					~harmonizer.set(\amp7Up, amp7, \amp7Low, amp7);
-					postln("AMP 5 : " + amp5, "  AMP 7 : " + amp7);
+					postln("AMP 5 : " + amp5 + "  AMP 7 : " + amp7);
 
 					~harmonizer.set(\high_low_mix, high_low_mix);
 					postln("High & Low Mix : " + high_low_mix);
