@@ -318,13 +318,14 @@ s.waitForBoot{
 		}, ccNum: 7, chan: 0);
 
 
-		//////////////////////////////////////PADS/////////////////////////////////////////
+		////////////////////////////////////// HARMONY PADS/////////////////////////////////////////
 
 		MIDIdef.noteOn(\firstPad,{
 			arg val, num, chan, src;
 
 			postln('PATCH 1 : 3 - 5');
 			~harmonizer.set(\pitch1, 4, \pitch2, 7, \pitch3, 0);
+			~harmonizer.set(\amphmidi, 1);
 
 			OSCdef('OSCreceiver',
 				{
@@ -387,6 +388,7 @@ s.waitForBoot{
 
 			postln('PATCH 2: 4 - 5 - 7m');
 			~harmonizer.set(\pitch1, 5, \pitch2, 7, \pitch3, 10);
+			~harmonizer.set(\amphmidi, 1);
 
 			OSCdef('OSCreceiver',
 				{
@@ -449,6 +451,7 @@ s.waitForBoot{
 
 			postln('PATCH 3 : 4 - 4# - 7min');
 			~harmonizer.set(\pitch1, 5, \pitch2, 6, \pitch3, 10);
+			~harmonizer.set(\amphmidi, 1);
 
 			OSCdef('OSCreceiver',
 				{
@@ -514,6 +517,7 @@ s.waitForBoot{
 			~harmonizer.set(\amp5Up, 0, \amp5Low, 0);
 			~harmonizer.set(\amp7Up, 0, \amp7Low, 0);
 			~harmonizer.set(\amp3Low, 0);
+			~harmonizer.set(\amphmidi, 1);
 
 			OSCdef('OSCreceiver',
 				{
@@ -595,6 +599,8 @@ s.waitForBoot{
 
 		},noteNum: 41);
 
+		//////////////////////DELAY & REVERB PATCHES /////////////////////////
+
 		MIDIdef.noteOn(\delayPatch,{
 			arg val, num, chan, src;
 
@@ -622,11 +628,12 @@ s.waitForBoot{
 
 					if (k_map>= 0.8,{
 						~dl.set(\mix, 1);
-						postln( "delaaaay OFF");
+						postln( "Delay OFF. dry/wet: " + k_map);
 
 					},
 					{
 						~dl.set(\mix, k_map);
+						postln("dry/wet: " + k_map);
 					});
 
 
@@ -657,15 +664,17 @@ s.waitForBoot{
 					x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
 					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
 					z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
-					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
+					k_map = LinLin.ar(k,0,1,-1,0); //  mapping of the Reverb amount
 
-					if (k_map>= 0.8,{
-						~rev.set(\wetR, 1);
-						postln( "Reverbd OFF");
 
-					},
-					{
-						~rev.set(\wetR, k_map);
+					if( k_map < -0.8,
+						{
+							~rev.set(\wetR, -0.8);
+							postln("Max reverb. dry/wet: " + k_map);
+						},
+						{
+							~rev.set(\wetR, k_map);
+							postln("dry/wet: " + 0-k_map);
 					});
 
 
