@@ -14,15 +14,15 @@ Server.killAll
 	o = Server.local.options;
 	o.sampleRate = 48000;
 	o.blockSize = 32;
-	o.outDevice =  "Windows WASAPI : Cassa/Cuffie (Realtek High Definition Audio)";//"ASIO : UMC ASIO Driver";
-	o.inDevice ="Windows WASAPI : Gruppo microfoni (Realtek High Definition Audio)"; //"ASIO : UMC ASIO Driver";
-	s.latency = 0.001; //0.2 is SC default
+	o.outDevice =  "ASIO : Focusrite USB ASIO";//"Windows WASAPI : Cassa/Cuffie (Realtek High Definition Audio)";//"ASIO : UMC ASIO Driver";
+	o.inDevice ="ASIO : Focusrite USB ASIO"; //"Windows WASAPI : Gruppo microfoni (Realtek High Definition Audio)"; //"ASIO : UMC ASIO Driver";
+	s.latency = 0.01; //0.2 is SC default
 	s.boot;
 	postln("Server section status: RUNNING.");
 }.defer(1);
 
-//ServerOptions.devices;
-//ServerOptions.inDevices;
+ServerOptions.devices;
+ServerOptions.inDevices;
 //ServerOptions.outDevices;
 
 
@@ -49,9 +49,10 @@ s.waitForBoot{
 
 			/////////////Noise-Gate//////////////
 			inputAmp = Amplitude.kr(in);//traking the input amplitude
-			threshhold = 0.04;	// noise gating threshold
+			threshhold = 0.01;	// noise gating threshold
 			gate = Lag.kr(inputAmp > threshhold, 0.01);// using Lag to smoothing out control signals.
-			in= in*gate;
+			//in= in*gate;
+
 
 			//PithTraking
 			# freq, hasFreq = Tartini.kr(in);
@@ -69,7 +70,7 @@ s.waitForBoot{
 			outHarmBus, outVoiceBus
 			buffer1, buffer2, buffer3
 			amph = 1, ampv = 1, amphmidi = 1
-			amp4Up = 1, amp5Up = 1, amp7Up = 1, amp4Low = 1, amp5Low = 1, amp7Low=1
+			amp4Up = 1, amp5Up = 1, amp7Up = 0, amp4Low = 1, amp5Low = 1, amp7Low=1
 			pitch1 = 4, pitch2 = 7, pitch3 = 12
 			high_low_mix = 0
 			|
@@ -89,8 +90,8 @@ s.waitForBoot{
 			////////////// Fixed harmony ///////////////
 
 			fourthUp = amp4Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch1), (2.pow(1/12)).pow(pitch1), grainsPeriod: 2);
-			fifthUp = amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch2), (2.pow(1/12)).pow(pitch2), grainsPeriod: 2);
-			sevenUp = amp7Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch3), (2.pow(1/12)).pow(pitch3), grainsPeriod: 2);
+			fifthUp = 0.7*amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch2), (2.pow(1/12)).pow(pitch2), grainsPeriod: 2);
+			sevenUp = 0 * amp7Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch3), (2.pow(1/12)).pow(pitch3), grainsPeriod: 2);
 
 			fourthLow = amp4Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch1), 0.5*(2.pow(1/12)).pow(pitch1), grainsPeriod: 4);
 			fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch2), 0.5*(2.pow(1/12)).pow(pitch2), grainsPeriod: 4);
@@ -295,7 +296,7 @@ s.waitForBoot{
 			arg val, num, chan, src;
 			[val/127,num, chan].postln;
 
-			~dl.set(\delTime, (val/127)*2); // 2 seconds is the The maximum delay time. Used to initialize the delay buffer size.
+			~dl.set(\delTime, (val/127)*1.5); // 2 seconds is the The maximum delay time. Used to initialize the delay buffer size.
 			postln("Delay time");
 		}, ccNum: 5, chan: 0);
 
@@ -304,7 +305,7 @@ s.waitForBoot{
 			arg val, num, chan, src;
 			[val/127,num,chan].postln;
 
-			~dl.set(\decay, (val/127)*4); // 4 second is the the maximum decay time.
+			~dl.set(\decay, (val/127)*3); // 4 second is the the maximum decay time.
 			postln("Delay  Decay time");
 		}, ccNum: 6, chan: 0);
 
@@ -313,9 +314,17 @@ s.waitForBoot{
 			arg val, num, chan, src;
 			[val/127,num, chan].postln;
 
-			~rev.set(\revTime, (val/127)*4); // 4 second is the the maximum rev Time.
+			~rev.set(\revTime, (val/127)*3); // 4 second is the the maximum rev Time.
 			postln("rev  Decay time");
 		}, ccNum: 7, chan: 0);
+
+		//normal voice volume
+		MIDIdef.cc(\eighthKnob,{
+			arg val, num, chan, src;
+			[val/127,num, chan].postln;
+
+			~harmonizer.set(\ampv, (val/127)*1.5); // 4 second is the the maximum rev Time.			postln("normal voice volume");
+		}, ccNum: 8, chan: 0);
 
 
 		////////////////////////////////////// HARMONY PADS/////////////////////////////////////////
@@ -344,7 +353,7 @@ s.waitForBoot{
 
 					x_map = LinLin.ar(x,0,1,0,2);// mapping the feedback
 					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-					z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
+					z_map = LinLin.ar(z,0,1,0,1.5);// mapping of the cut off lpf
 					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
 
 					high_low_mix = LinLin.ar(y,0,1,-1.5,1.5);
@@ -354,7 +363,7 @@ s.waitForBoot{
 
 					amph = a.map(z_map);
 
-					if ( amph < 0.15, {
+					if ( amph < 0.2, {
 
 						~harmonizer.set(\amph, 0);
 						postln("harmony is off");
@@ -413,27 +422,26 @@ s.waitForBoot{
 
 					x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
 					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-					z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
+					z_map = LinLin.ar(z,0,1,0,1.5);// mapping of the cut off lpf
 					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
 
 					high_low_mix = LinLin.ar(y,0,1,-1.5,1.5);
 
-					amp5 = 0.5*x_map;
+					amp5 = 0.5*x_map-0.4;
 					amp7 = 0.33*x_map;
-					/*
-					if ( z_map < 0.15, {
-					~harmonizer.set(\amph, 0);
-					postln("harmony is off");
-					postln("amph : " + z_map);
-					}, {
-					~harmonizer.set(\amph, z_map);
-					postln("harmony is on");
-					postln("amph : " + z_map);
-
-					});*/
 					amph = a.map(z_map);
-					~harmonizer.set(\amph, amph);
 
+					if ( amph < 0.15, {
+
+						~harmonizer.set(\amph, 0);
+						postln("harmony is off");
+						postln("amph : " + z_map);
+					}, {
+						~harmonizer.set(\amph, amph);
+						postln("harmony is on");
+						postln("amph : " + z_map);
+
+					});
 					if (k_map>= 0.8,{
 						~dl.set(\mix, 1);
 						postln( "delaaaay OFF");
@@ -480,26 +488,26 @@ s.waitForBoot{
 
 					x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
 					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-					z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
+					z_map = LinLin.ar(z,0,1,0,1.5);// mapping of the cut off lpf
 					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
 
 					high_low_mix = LinLin.ar(y,0,1,-1.5,1.5);
 
-					amp5 = 0.5*x_map;
+					amp5 = 0.5*x_map-0.4;
 					amp7 = 0.33*x_map;
-					/*
-					if ( z_map < 0.15, {
-					~harmonizer.set(\amph, 0);
-					postln("harmony is off");
-					postln("amph : " + z_map);
-					}, {
-					~harmonizer.set(\amph, z_map);
-					postln("harmony is on");
-					postln("amph : " + z_map);
-
-					}); */
 					amph = a.map(z_map);
-					~harmonizer.set(\amph, amph);
+
+					if ( amph < 0.15, {
+
+						~harmonizer.set(\amph, 0);
+						postln("harmony is off");
+						postln("amph : " + z_map);
+					}, {
+						~harmonizer.set(\amph, amph);
+						postln("harmony is on");
+						postln("amph : " + z_map);
+
+					});
 
 					if (k_map>= 0.8,{
 						~dl.set(\mix, 1);
@@ -527,11 +535,13 @@ s.waitForBoot{
 			arg val, num, chan, src;
 
 			postln('PATCH 4 : octavier');
-			~harmonizer.set(\pitch1, -12);
+			~harmonizer.set(\pitch1, 0);
 			~harmonizer.set(\amp5Up, 0, \amp5Low, 0);
 			~harmonizer.set(\amp7Up, 0, \amp7Low, 0);
-			~harmonizer.set(\amp3Low, 0);
-			~harmonizer.set(\amphmidi, 1);
+			~harmonizer.set(\amp4Up, 0);
+			~harmonizer.set(\amphmidi, 1.3);
+			~harmonizer.set(\ampv, 0.2);
+
 
 			OSCdef('OSCreceiver',
 				{
@@ -550,21 +560,21 @@ s.waitForBoot{
 
 					x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
 					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-					z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
+					z_map = LinLin.ar(z,0,1,0,1.5);// mapping of the cut off lpf
 					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
-					/*
-					if ( z_map < 0.15, {
-					~harmonizer.set(\amph, 0);
-					postln("harmony is off");
-					postln("amph : " + z_map);
-					}, {
-					~harmonizer.set(\amph, z_map);
-					postln("harmony is on");
-					postln("amph : " + z_map);
-
-					});*/
 					amph = a.map(z_map);
-					~harmonizer.set(\amph, amph);
+
+					if ( amph < 0.15, {
+
+						~harmonizer.set(\amph, 0);
+						postln("harmony is off");
+						postln("amph : " + z_map);
+					}, {
+						~harmonizer.set(\amph, amph);
+						postln("harmony is on");
+						postln("amph : " + z_map);
+
+					});
 
 					if (k_map>= 0.8,{
 						~dl.set(\mix, 1);
@@ -640,7 +650,7 @@ s.waitForBoot{
 
 					x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
 					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-					z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
+					z_map = LinLin.ar(z,0,1,0,1.5);// mapping of the cut off lpf
 					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
 
 
@@ -681,13 +691,13 @@ s.waitForBoot{
 
 					x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
 					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-					z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
+					z_map = LinLin.ar(z,0,1,0,1.5);// mapping of the cut off lpf
 					k_map = LinLin.ar(k,0,1,-1,0); //  mapping of the Reverb amount
 
 
 					if( k_map < -0.8,
 						{
-							~rev.set(\wetR, -0.8);
+							~rev.set(\wetR, 0-0.8);
 							postln("Max reverb. dry/wet: " + k_map);
 						},
 						{
