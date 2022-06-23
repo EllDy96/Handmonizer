@@ -1,5 +1,5 @@
 # Handmonizer: a vocal improvization tool for live performances
-
+![image](https://user-images.githubusercontent.com/74536287/120165513-f36ea980-c1fb-11eb-8aa3-eb124e33b0dd.png)
 Hello everybody, this is an anusual Harmoniser that you can control moving your arm
 to enhance the performance of a one man band.
 
