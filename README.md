@@ -64,9 +64,11 @@ Finally, we developed a second version in a separate script file. Instead of fix
 The two classes mentioned above, are developed by [Matthew Yee King](https://github.com/yeeking/myksupercollider) and slightly modified by us to be better adapted to our purpose.
 
 
-![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/projectArchitecture.png)
+
 
 ## Communication Protocols And Architecture
+
+![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/projectArchitecture.png)
 
 To switch between patches, we use a MIDI controller where we assign each pad to a patch by changing the necessary parameters. In addition to the patches mentioned above, we use one pad as an ON/OFF toggle button and another pad as a bypass for the harmonic voices. 
 The user interface is hosted as a web page/application in an Express server, the connection is set up through the framework Socket.io. All the control parameters mentioned above are computed in the client and then sent to the server. From the server, the parameters are written in OSC messages and forwarded to SuperCollider. 
