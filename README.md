@@ -76,7 +76,7 @@ The artist was able to try the Handmonizer in two different workshops. On the fi
 
 ![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/mariapia_demo.jpg)
 
-Finally, we compiled a questionnaire for her to evaluate our work. Here we present her response.
+Finally, we compiled a questionnaire for her to evaluate our work. Here we present her [response](https://github.com/EllDy96/Handmonizer/blob/main/Report/MariapiaEvaluationQuestionaire.pdf).
 
 # Acknowledgements
 
