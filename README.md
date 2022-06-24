@@ -1,4 +1,4 @@
-# Handmonizer: a vocal improvization tool for live performances
+# Handmonizer: An Artist-Oriented Vocal Improvization Tool
 
 
 ![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/artisticProjectArchitecture.png)
