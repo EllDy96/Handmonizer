@@ -6,7 +6,7 @@ The implementation of Handmonizer, a vocal harmonizer which changes its behaviou
 There is also a second version where the user can set a specific scale and the harmonization will stay inside that scale. In this case, the hand motion interaction is the same, however the MIDI controller can only be used to control some parameters with the knobs, without changing between patches.
 
 # How to use
-To run the SuperCollider code you need to include the two classes included in our "External Classes" folder in SuperCollider's library path on your computer.
+To run the SuperCollider code you need to include the two classes cointained in [External Classes](https://github.com/EllDy96/Handmonizer/tree/main/SupercolliderCode/External%20classes) folder into the  SuperCollider external library folder on your computer.
 Then you should install the PitchShiftPA class by simply typing and running *Quarks.gui* on SuperCollider. A window with all the available quarks will appear, where you find and install PitchShiftPA.
 
 To run the hand motion recognition web application you need to have [node.js](https://nodejs.org/en/download/) installed on your computer.
