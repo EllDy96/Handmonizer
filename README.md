@@ -23,8 +23,9 @@ The Handmonizer structure is based on a node server that allows the communicatio
 
 The harmonizer can be controlled through hand gestures captured from a webcam. For the hand pose recognition, we use one pre-trained model from [ml5.js](https://ml5js.org}{https://ml5js.org), a JavaScript framework for creative coding built on top of TensorFlow.js that allows the use of GPU-accelerated machine learning algorithms in a web browser. The TensorFlow ecosystem provides an easy-to-use tool to convert pre-trained ML models trained in Python or C++ into web targets. Some of these models were specifically designed with creative applications in mind to facilitate the development of real-time music related Web-application.
 We use the model called [Handpose](https://learn.ml5js.org/#/reference/handpose) that performs hand-skeleton finger tracking. It takes the video stream frame by frame and returns the coordinates of 21 hand keypoints over the palm of the hand as shown in this figure.
-
-![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/hand.png)
+<p align="center">
+  <img src="https://github.com/EllDy96/Handmonizer/blob/main/Report/hand.png" >
+</p>
 
 This process is GPU intensive. To achieve the best performance a system with a dedicated GPU is advised.
 Based on the coordinates of these 21 points we compute three main parameters
@@ -62,6 +63,7 @@ A special feature of the Handmonizer is the smooth transition between the voices
 Finally, we developed a second version in a separate script file. Instead of fixed intervals, the Handmonizer can be used as a classic harmonizer following a specific scale, where the user can set the key and scale type (major, minor, etc). By hard-coding the first MIDI note for each key, we use an external class called MiscFuncs to retrieve the array of MIDI notes for the selected scale. Then to retrieve in real time the precise MIDI note sang by the singer, we use another external class called MyKFiddle. Finally, the algorithm checks if the input note is part of the scale. If this is the case, it computes the pitch ratio and feeds it to the pitch shifter. 
 The two classes mentioned above, are developed by [Matthew Yee King](https://github.com/yeeking/myksupercollider) and slightly modified by us to be better adapted to our purpose.
 
+
 ![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/projectArchitecture.png)
 
 ## Communication Protocols And Architecture
@@ -74,14 +76,18 @@ Finally, we use the hand orientation as an imaginary knob that controls the dry/
 
 # Artist Oriented System
 
-<img src="https://github.com/EllDy96/Handmonizer/blob/main/Report/IMG_9934.jpeg" width="50%" height="50%">
+<p align="center">
+  <img src="https://github.com/EllDy96/Handmonizer/blob/main/Report/IMG_9934.jpeg" width="50%" height="50%" >
+</p>
+
+
 
 
 This project was tailored to a specific artist, the well-known Italian singer Maria Pia De Vito. We developed this system in collaboration with her, aiming to enhance her One-Woman-Band live performance. We designed everything following her needs, collecting her feedback in each step. This is a proof of concept design that can be improved in order to be more robust so that it can be used as an improvisation tool in a live concert. 
 The artist was able to try the Handmonizer in two different workshops. On the first workshop we presented her with a basic prototype to collect her feedback on the main features. During the second workshop, she was able to try an improved version that included more features according to her indications. 
-
-<img src="https://github.com/EllDy96/Handmonizer/blob/main/Report/mariapia_demo.jpg" width="50%" height="50%">
-
+<p align="center">
+  <img src="https://github.com/EllDy96/Handmonizer/blob/main/Report/mariapia_demo.jpg" width="50%" height="50%">
+</p>
 Finally, we defined an evaluation strategy for artist-oriented tool like that, collecting feedback with a questionnaire addressed to the singer. The aim of the latter is to help other engineers that would like to develop cutting-edge technologies working alongside artists. Here we present her [response](https://github.com/EllDy96/Handmonizer/blob/main/Report/MariapiaEvaluationQuestionaire.pdf).
 
 # Acknowledgements
@@ -89,4 +95,5 @@ Finally, we defined an evaluation strategy for artist-oriented tool like that, c
 The authors would like to thank everyone involved in this project. First of all, the singer Maria Pia De Vito for her availability, her kindness and her positivity in introducing some novelty in her performance. A special thanks to Augusto Sarti for creating and organizing this brilliant team. Luca Comanducci for his constant feedback concerning the implementation and report writing. Special thanks to the two professors from Goldsmiths University of London. Mark D'Inverno for his insight concerning the evaluation procedure and Mathew Yee King for his availability and valuable SuperCollider support.
 
 # Authors
-Antonios Pappas, Davide Lionetti
+Antonios Pappas
+Davide Lionetti
