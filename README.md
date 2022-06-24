@@ -1,7 +1,9 @@
 # Handmonizer: An Artist-Oriented Vocal Improvization Tool
+<p align="center">
+  <img src="https://github.com/EllDy96/Handmonizer/blob/main/Report/artisticProjectArchitecture.png" width="65%" height="65%" >
+</p>
 
 
-![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/artisticProjectArchitecture.png)
 The implementation of Handmonizer, a vocal harmonizer which changes its behaviour using hand motion recognition. The user can change the harmonic patterns if the harmonizer by simply moving their hand in front of a webcam while singing. In addition to that, they can switch between different patches using a MIDI controller to create different harmonic voices. 
 There is also a second version where the user can set a specific scale and the harmonization will stay inside that scale. In this case, the hand motion interaction is the same, however the MIDI controller can only be used to control some parameters with the knobs, without changing between patches.
 
@@ -11,7 +13,7 @@ Then you should install the PitchShiftPA class by simply typing and running *Qua
 
 To run the hand motion recognition web application you need to have [node.js](https://nodejs.org/en/download/) installed on your computer.
 
-In order to use the application you need a webcam and microphone. Clone the repository and inside the Interaction folder run the server using Node.js with the command node .\server.js from the PoweShell terminal. Then connect to the url localhost:55123 in a browser (it may take some seconds to load the ML model). Open Hanmonizer.scd (or scale_handmonizer.scd) in SuperColliderCode folder and run the code following the instructions in the comments.
+In order to use the application you need a webcam and microphone. Clone the repository and inside the Interaction folder run the server using Node.js with the command `node .\server.js` from the PoweShell terminal. Then connect to the url `localhost:55123` in a browser (it may take some seconds to load the ML model). Open Hanmonizer.scd (or scale_handmonizer.scd) in SuperColliderCode folder and run the code following the instructions in the comments.
 
 # Handmonizer Implementation
 
