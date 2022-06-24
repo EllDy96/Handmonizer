@@ -71,13 +71,14 @@ Another feature that we use is the palm length represented by the white line in 
 Finally, we use the hand orientation as an imaginary knob that controls the dry/wet level of the reverb or delay effects. When we keep our hand straight we have a fully dry signal (e.g.: no effect). While we rotate our hand either left or right we add the amount of the wet signal and decrease the amount of the dry signal using a cross-fade effect. 
 
 # Artist Oriented System
-![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/IMG_9934.jpeg)
+
+<img src="https://github.com/EllDy96/Handmonizer/blob/main/Report/IMG_9934.jpeg" width="50%" height="50%">
+
+
 This project was tailored to a specific artist, the well-known Italian singer Maria Pia De Vito. We developed this system in collaboration with her, aiming to enhance her One-Woman-Band live performance. We designed everything following her needs, collecting her feedback in each step. This is a proof of concept design that can be improved in order to be more robust so that it can be used as an improvisation tool in a live concert. 
 The artist was able to try the Handmonizer in two different workshops. On the first workshop we presented her with a basic prototype to collect her feedback on the main features. During the second workshop, she was able to try an improved version that included more features according to her indications. 
 
-
-
-![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/mariapia_demo.jpg)
+<img src="https://github.com/EllDy96/Handmonizer/blob/main/Report/mariapia_demo.jpg" width="50%" height="50%">
 
 Finally, we defined an evaluation strategy for artist-oriented tool like that, collecting feedback with a questionnaire addressed to the singer. The aim of the latter is to help other engineers that would like to develop cutting-edge technologies working alongside artists. Here we present her [response](https://github.com/EllDy96/Handmonizer/blob/main/Report/MariapiaEvaluationQuestionaire.pdf).
 
