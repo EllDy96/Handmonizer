@@ -1,4 +1,4 @@
-# Handmonizer: An Artist-Oriented Vocal Improvization Tool
+# Handmonizer: a vocal improvization tool for live performances
 
 
 ![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/artisticProjectArchitecture.png)
@@ -79,7 +79,7 @@ The artist was able to try the Handmonizer in two different workshops. On the fi
 
 ![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/mariapia_demo.jpg)
 
-Finally, we compiled a questionnaire for her to evaluate our work. Here we present her [response](https://github.com/EllDy96/Handmonizer/blob/main/Report/MariapiaEvaluationQuestionaire.pdf).
+Finally, we defined an evaluation strategy for artist-oriented tool like that, collecting feedback with a questionnaire addressed to the singer. The aim of the latter is to help other engineers that would like to develop cutting-edge technologies working alongside artists. Here we present her [response](https://github.com/EllDy96/Handmonizer/blob/main/Report/MariapiaEvaluationQuestionaire.pdf).
 
 # Acknowledgements
 
