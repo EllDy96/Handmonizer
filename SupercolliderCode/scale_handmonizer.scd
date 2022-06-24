@@ -2,6 +2,7 @@
 Server.killAll;
 
 //////////////////////////////// SCALE HANDMONIZER///////////////////////////////////
+// In this version you could set the key and the scale type instead of having fixed intervals
 
 // we use .defer() to schedule the execution of each section.
 // first run the server section separatelly, then you can run all the other sections together

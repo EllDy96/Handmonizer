@@ -2,13 +2,13 @@
 
 Server.killAll
 
-////////////////////////////////HANDMONIZER///////////////////////////////////
+
 
 // we use .defer() to schedule the execution of each section.
 // first run the server section separatelly, then you can run all the other sections together
 (
 {
-	//======INITIALIZE SC SERVER ======
+	//INITIALIZE SC SERVER
 	//if server fails to start and error encountered:  try, try again...it's stubborn sometimes...
 	o = Server.local.options;
 	o.sampleRate = 48000;
