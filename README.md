@@ -1,4 +1,4 @@
-# Handmonizer: a vocal improvization tool for live performances
+# Handmonizer: An Artist-Oriented Vocal Improvization Tool
 
 
 ![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/artisticProjectArchitecture.png)
@@ -60,6 +60,8 @@ A special feature of the Handmonizer is the smooth transition between the voices
 Finally, we developed a second version in a separate script file. Instead of fixed intervals, the Handmonizer can be used as a classic harmonizer following a specific scale, where the user can set the key and scale type (major, minor, etc). By hard-coding the first MIDI note for each key, we use an external class called MiscFuncs to retrieve the array of MIDI notes for the selected scale. Then to retrieve in real time the precise MIDI note sang by the singer, we use another external class called MyKFiddle. Finally, the algorithm checks if the input note is part of the scale. If this is the case, it computes the pitch ratio and feeds it to the pitch shifter. 
 The two classes mentioned above, are developed by [Matthew Yee King](https://github.com/yeeking/myksupercollider) and slightly modified by us to be better adapted to our purpose.
 
+![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/projectArchitecture.png)
+
 ## Communication Protocols And Architecture
 
 To switch between patches, we use a MIDI controller where we assign each pad to a patch by changing the necessary parameters. In addition to the patches mentioned above, we use one pad as an ON/OFF toggle button and another pad as a bypass for the harmonic voices. 
@@ -67,8 +69,6 @@ The user interface is hosted as a web page/application in an Express server, the
 The hand motion recognition features are sent to SuperCollider as OSC messages in real time and are used to control different parameters that define the harmonizer's performance. We use the x-coordinate of the palm centroid to add more voices as we move from left to right. We can imagine the screen divided into three columns where on the first we only have one additional voice and every time we visit the next column we add one more voice. Similarly, we map the y-coordinate as a switch between low octave and high octave harmonics. We can imagine the screen divided into two rows where the upper row represents the high octave harmonics and the bottom row represents the low octave harmonics. All these changes in number of voices and octaves are performed in a smooth way as explained previously, so the artist can explore different sounds.
 Another feature that we use is the palm length represented by the white line in the first figure. We have mapped this feature to the harmony fader using a dB scale to control the volume of the harmonic voices. There are two ways to exploit this feature. The first and most intuitive way is to open and close our hand and the second is to move our hand back and forth. If the artist wants to emphasise the harmonic voices she can simply move her hand closer to the camera.
 Finally, we use the hand orientation as an imaginary knob that controls the dry/wet level of the reverb or delay effects. When we keep our hand straight we have a fully dry signal (e.g.: no effect). While we rotate our hand either left or right we add the amount of the wet signal and decrease the amount of the dry signal using a cross-fade effect. 
-
-![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/projectArchitecture.png)
 
 # Artist Oriented System
 ![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/IMG_9934.jpeg)
