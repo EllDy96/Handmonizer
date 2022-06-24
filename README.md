@@ -60,8 +60,6 @@ A special feature of the Handmonizer is the smooth transition between the voices
 Finally, we developed a second version in a separate script file. Instead of fixed intervals, the Handmonizer can be used as a classic harmonizer following a specific scale, where the user can set the key and scale type (major, minor, etc). By hard-coding the first MIDI note for each key, we use an external class called MiscFuncs to retrieve the array of MIDI notes for the selected scale. Then to retrieve in real time the precise MIDI note sang by the singer, we use another external class called MyKFiddle. Finally, the algorithm checks if the input note is part of the scale. If this is the case, it computes the pitch ratio and feeds it to the pitch shifter. 
 The two classes mentioned above, are developed by [Matthew Yee King](https://github.com/yeeking/myksupercollider) and slightly modified by us to be better adapted to our purpose.
 
-![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/projectArchitecture.png)
-
 ## Communication Protocols And Architecture
 
 To switch between patches, we use a MIDI controller where we assign each pad to a patch by changing the necessary parameters. In addition to the patches mentioned above, we use one pad as an ON/OFF toggle button and another pad as a bypass for the harmonic voices. 
@@ -70,12 +68,14 @@ The hand motion recognition features are sent to SuperCollider as OSC messages i
 Another feature that we use is the palm length represented by the white line in the first figure. We have mapped this feature to the harmony fader using a dB scale to control the volume of the harmonic voices. There are two ways to exploit this feature. The first and most intuitive way is to open and close our hand and the second is to move our hand back and forth. If the artist wants to emphasise the harmonic voices she can simply move her hand closer to the camera.
 Finally, we use the hand orientation as an imaginary knob that controls the dry/wet level of the reverb or delay effects. When we keep our hand straight we have a fully dry signal (e.g.: no effect). While we rotate our hand either left or right we add the amount of the wet signal and decrease the amount of the dry signal using a cross-fade effect. 
 
-# Artist Oriented System
+![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/projectArchitecture.png)
 
+# Artist Oriented System
+![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/IMG_9934.jpeg)
 This project was tailored to a specific artist, the well-known Italian singer Maria Pia De Vito. We developed this system in collaboration with her, aiming to enhance her One-Woman-Band live performance. We designed everything following her needs, collecting her feedback in each step. This is a proof of concept design that can be improved in order to be more robust so that it can be used as an improvisation tool in a live concert. 
 The artist was able to try the Handmonizer in two different workshops. On the first workshop we presented her with a basic prototype to collect her feedback on the main features. During the second workshop, she was able to try an improved version that included more features according to her indications. 
 
-![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/IMG_9934.jpeg)
+
 
 ![image](https://github.com/EllDy96/Handmonizer/blob/main/Report/mariapia_demo.jpg)
 
