@@ -2,47 +2,41 @@
 
 Server.killAll
 
-////////////////////////////////////////////REMAMBER to record your Sessions with the Supercollider recorders ////////////////////////////////////
+////////////////////////////////HANDMONIZER///////////////////////////////////
 
-//////////////////ENJOY THE HANDMONIZER///////////////////////////////////
-
-//If it does
+// we use .defer() to schedule the execution of each section.
+// first run the server section separatelly, then you can run all the other sections together
 (
 {
-	//#1 ======INITIALIZE SC SERVER ======
+	//======INITIALIZE SC SERVER ======
 	//if server fails to start and error encountered:  try, try again...it's stubborn sometimes...
 	o = Server.local.options;
 	o.sampleRate = 48000;
 	o.blockSize = 32;
-	o.outDevice ="ASIO : UMC ASIO Driver";//"Windows WASAPI : Cassa/Cuffie (Realtek High Definition Audio)";//
-	o.inDevice = "ASIO : UMC ASIO Driver";//"Windows WASAPI : Gruppo microfoni (Realtek High Definition Audio)"; //
+	o.outDevice = nil; //use system default audio output (change value to manually configure input)
+	o.inDevice = nil; //use system default audio output (change value to manually configure output)
+	// use your audio interface for less latency
 	s.latency = 0.01; //0.2 is SC default
 	s.boot;
 	postln("Server section status: RUNNING.");
 }.defer(1);
-
-//ServerOptions.devices;
-//ServerOptions.inDevices;
-//ServerOptions.outDevices;
+)
 
 
-
-
-///////////////////////////////////// MODEL ////////////////////////////////////////////////////
-
-
+/////////////////////////////////HANDMONIZER/////////////////////////////
+// check the post window to see if every section is running successfullyS
+(
 //////(/////////////////////////////SYNTHS////////////////////////////////////////////////////////////////
 s.waitForBoot{
 	{
 		postln("Synth section status: RUNNING.");
-		SynthDef.new(\voiceTracker, {
+		SynthDef.new(\voiceTracker, {  //pitch tracking
 			|
 			outputBus, outFreqBus, outMidi
 			|
 
 			var in, amp, freq, hasFreq, out;
 			var midiFundamental;
-
 
 
 			in = Mix.new(SoundIn.ar([0,1]));
@@ -53,12 +47,9 @@ s.waitForBoot{
 			gate = Lag.kr(inputAmp > threshhold, 0.01);// using Lag to smoothing out control signals.
 			in= in*gate;
 
-			//PithTraking
+			//PitchTraking
 			# freq, hasFreq = Tartini.kr(in);
-			//midiFundamental = freq.cpsmidi;
 
-
-			//Out.kr(outMidi, midiFundamental);
 			Out.kr(outFreqBus, freq);
 			Out.ar(outputBus, in);
 		}).send(s);
@@ -78,29 +69,28 @@ s.waitForBoot{
 			var voice, harmonics;
 			var fundamental, inFreq, out;
 			var fourthUp, fifthUp, sevenUp, fourthLow, fifthLow, sevenLow;
-			var scaleArray;
-			var harmonic1 = 4, harmonic2 = 5, harmonic3 = 7;
-			var pitch = 0;
-			var p1 = 0, p2 = 0, p3 = 0;
 			var grains = 2;
 			var high_harm, low_harm;
 
 
 			////////////// Fixed harmony ///////////////
 
+			// higher harmonics
 			fourthUp = amp4Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch1), (2.pow(1/12)).pow(pitch1), grainsPeriod: 2);
 			fifthUp = amp5Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch2), (2.pow(1/12)).pow(pitch2), grainsPeriod: 2);
 			sevenUp = amp7Up * PitchShiftPA.ar(in, inFreqBus, (2.pow(1/12)).pow(pitch3), (2.pow(1/12)).pow(pitch3), grainsPeriod: 2);
 
+
+			// lower harmonics
 			fourthLow = amp4Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch1), 0.5*(2.pow(1/12)).pow(pitch1), grainsPeriod: 4);
 			fifthLow = amp5Low * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch2), 0.5*(2.pow(1/12)).pow(pitch2), grainsPeriod: 4);
 			sevenLow = amp7Low  * PitchShiftPA.ar(in, inFreqBus, 0.5*(2.pow(1/12)).pow(pitch3), 0.5*(2.pow(1/12)).pow(pitch3), grainsPeriod: 2);
 
+			// mixing high and low harmonics separately to modify them independently
 			high_harm = Mix.new([fourthUp, fifthUp, sevenUp]);
 			low_harm = Mix.new([fourthLow, fifthLow, sevenLow]);
 
-			//harmonics = Mix.new([fourthUp, fifthUp, sevenUp, fourthLow, fifthLow, sevenLow]);
-
+			// mixing them with XFade2 to crossfade between them
 			harmonics = amphmidi * XFade2.ar(low_harm, high_harm, high_low_mix);
 
 			Out.ar(outVoiceBus, ampv * in);
@@ -109,17 +99,13 @@ s.waitForBoot{
 
 		/////////////////////////////////////////////////FINAL MIX/////////////////////////////////////////////
 
-		SynthDef.new(\finalSum, {
+		SynthDef.new(\finalSum, { //mixing main voice and harmonics in one channel
 			|
 			inputVoiceBus, inputHarmBus, outputBus, mix = -0.5
 			|
 
 			var input, harmonics;
 			var out;
-
-			var add;
-			var delay;
-			var mixDelayed;
 
 			input = In.ar(inputVoiceBus, 1);
 			harmonics = In.ar(inputHarmBus, 1);
@@ -134,8 +120,7 @@ s.waitForBoot{
 
 		/////////////////////////////////Effects///////////////////////////////
 
-		//// Check the effect in parallel instead of in Cascade
-		SynthDef(\delayEffect, {
+		SynthDef(\delayEffect, { //delay effect
 			|
 			inputBus, outputBus, mix= 0.5, delTime=0.5, decay=2 //wetD = 0.5
 			|
@@ -147,14 +132,13 @@ s.waitForBoot{
 			highPassedSource= HPF.ar(in,200);
 
 			delay = CombL.ar(highPassedSource, maxDelTime, delTime, decay);
-			//sig = Mix([sig*(1-wetD), delay*wetD]);
 			mixDelayed = XFade2.ar(delay, in, mix);
 
 			highPassedDelay= BHiPass.ar(mixDelayed, freq:250);
 			Out.ar(outputBus,highPassedDelay);
 		}).send(s);
 
-		SynthDef.new(\reverbEffect, {
+		SynthDef.new(\reverbEffect, { //reverb effect
 			|
 			inputBus, outputBus, wetR = 0.5, revTime= 4
 			|
@@ -169,7 +153,7 @@ s.waitForBoot{
 
 			dry = 1 - wetR;
 			source = In.ar(inputBus, 1);
-			highPassedSource= HPF.ar(source,150); // first apply an high pass filter to the input signal to make the reverbered sound more realistic
+			highPassedSource= HPF.ar(source,150); // first apply a high pass filter to the input signal to make the reverbered sound more realistic
 
 
 			reverb = GVerb.ar( highPassedSource ,20,revTime, 0.5, 0.7 ,25, dry, 0.4, 0.3);
@@ -182,7 +166,7 @@ s.waitForBoot{
 
 		//////////////////////////////////Mixing the output/////////////////
 
-		SynthDef.new(\finalMix,{
+		SynthDef.new(\finalMix,{ //mixing everything together and sending the signal to the output bus
 			|
 			inputSignalBus, inputRevBus, inputDelBus, delFader= 0.7, revFader= 0.7
 			|
@@ -203,19 +187,19 @@ s.waitForBoot{
 
 	{
 		postln("Buses section status: RUNNING.");
+
 		// create the busses
 		~trackerOut = Bus.audio(s, 1);
 		~harmonizerVoice = Bus.audio(s, 1);
 		~harmonizerHarm = Bus.audio(s, 1);
 
-		~delBus = Bus.audio(s, 1);
-		~revBus = Bus.audio(s, 1);
+		~delBus = Bus.audio(s, 1); //delay bus
+		~revBus = Bus.audio(s, 1); //reverb bus
 
 		~finalBus = Bus.audio(s, 1);
 
 		// this bus contains the frequency of the note sung by the user
 		~fundamentalBus = Bus.control(s, 1);
-		~midiFundamental = Bus.control(s, 1);
 
 		// Create the groups
 		~inputGroup = Group.new;
@@ -223,7 +207,7 @@ s.waitForBoot{
 		~effectsGroup = Group.after(~harmonizerGroup);
 		~outputGroup = Group.after(~effectsGroup);
 
-		// instances of the various model Synth
+		// instances of each synth
 		~harmonizer = Synth.new(\harmonizer, [\inputBus, ~trackerOut, \inFreqBus, ~fundamentalBus, \outVoiceBus, ~harmonizerVoice, \outHarmBus, ~harmonizerHarm], ~harmonizerGroup);
 
 		~finalSum = Synth.after(~harmonizer, \finalSum, [\inputVoiceBus, ~harmonizerVoice, \inputHarmBus, ~harmonizerHarm, \outputBus, ~finalBus], ~harmonizerGroup);
@@ -234,13 +218,13 @@ s.waitForBoot{
 
 		~finalMix= Synth.new(\finalMix,[\inputSignalBus,~finalBus, \inputRevBus,~revBus, \inputDelBus, ~delBus], ~outputGroup);
 
-		~onOff = 0;
-		~onOffHarm = 1;
+		//declaring two global variables to be used later in the  midi patches
+		~onOff = 0; // on-off toggle for the whole system
+		~onOffHarm = 1; // on-off toggle for the harmonic voices
 
 	}.defer(5);
 	//****************************************MIDI SETUP*******************************************/
 
-	//Istantiation of the Midi keyboard for a monophonic synthetizer
 
 	{
 		postln("MIDI section status: RUNNING.");
@@ -251,10 +235,9 @@ s.waitForBoot{
 		//////////////////////////////////////////////////////Kbobs///////////////////////////////////////////////
 		//Reverb dry/wet knob
 
-		MIDIdef.cc(\firstKnob,{
+		MIDIdef.cc(\firstKnob,{ //reverb dry wet knob
 			arg val, num, chan, src;
 			[val/127,chan,num].postln;
-			//~revDryWetKnob.set();
 			~rev.set(\wetR, val/127);
 
 			postln("the rev dryWet");
@@ -262,7 +245,7 @@ s.waitForBoot{
 
 		//Delay dry/wet
 
-		MIDIdef.cc(\secondKnob,{
+		MIDIdef.cc(\secondKnob,{ //delay dry wet knob
 			arg val, num, chan, src;
 			var delDryWet= LinLin.kr(val,0,127,-1,1);
 			[val/127,num,chan].postln;
@@ -273,7 +256,7 @@ s.waitForBoot{
 		}, ccNum: 2, chan: 0);
 
 		//Delay fader
-		MIDIdef.cc(\thirdKnob,{
+		MIDIdef.cc(\thirdKnob,{ //delay fader
 			arg val, num, chan, src;
 			[val/127,num,chan].postln;
 
@@ -282,7 +265,7 @@ s.waitForBoot{
 		}, ccNum: 3, chan: 0);
 
 		//Rev fader
-		MIDIdef.cc(\forthKnob,{
+		MIDIdef.cc(\forthKnob,{ //reverb fader
 			arg val, num, chan, src;
 			[val/127,num, chan].postln;
 
@@ -291,7 +274,7 @@ s.waitForBoot{
 		}, ccNum: 4, chan: 0);
 
 		//delay Time
-		MIDIdef.cc(\fifthKnob,{
+		MIDIdef.cc(\fifthKnob,{ //delay time
 			arg val, num, chan, src;
 			[val/127,num, chan].postln;
 
@@ -300,7 +283,7 @@ s.waitForBoot{
 		}, ccNum: 5, chan: 0);
 
 		//delay decay Time
-		MIDIdef.cc(\sixthKnob,{
+		MIDIdef.cc(\sixthKnob,{ //delay decay time
 			arg val, num, chan, src;
 			[val/127,num,chan].postln;
 
@@ -309,7 +292,7 @@ s.waitForBoot{
 		}, ccNum: 6, chan: 0);
 
 		//rev Time
-		MIDIdef.cc(\seventhKnob,{
+		MIDIdef.cc(\seventhKnob,{ //reverb decay time
 			arg val, num, chan, src;
 			[val/127,num, chan].postln;
 
@@ -328,7 +311,7 @@ s.waitForBoot{
 			~harmonizer.set(\amphmidi, 1);
 
 			OSCdef('OSCreceiver',
-				{
+				{   //OSC def changing for every patch
 					arg msg;
 					var x_map, y_map, z_map, k_map, amp, amp1;
 					var high_low_mix;
@@ -336,17 +319,17 @@ s.waitForBoot{
 					var a = \db.asWarp;
 					var amph;
 
-					x = msg[1]; // x centroid  -> feedback     ->the sphere radius
-					y = msg[2];//  y  centroid -> index        ->the spere rays
-					z = msg[3];// palm length  -> LPF cut-off  ->the double squares
-					k = msg[4];// palm slope   -> Reverb amount->the square magnitude
+					x = msg[1]; // x centroid   -> number of voices
+					y = msg[2]; // y centroid   -> high-low harmonics crossfade
+					z = msg[3]; // palm length  -> harmonic voices on/off or enhance
+					k = msg[4]; // palm slope   -> effect dry/wet (reverb or delay)
 
 
-					x_map = LinLin.ar(x,0,1,0,2);// mapping the feedback
-					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-					z_map = LinLin.ar(z,0,1,0,1.5);// mapping of the cut off lpf
-					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
-
+					// mapping of OSC messages
+					x_map = LinLin.ar(x,0,1,0,2);
+					y_map = LinLin.ar(y,0,1,0,1);
+					z_map = LinLin.ar(z,0,1,0,1.5);
+					k_map = LinLin.ar(k,0,1,-1,1);
 					high_low_mix = LinLin.ar(y,0,1,-1.5,1.5);
 
 					amp5 = 0.5*x_map;
@@ -373,6 +356,7 @@ s.waitForBoot{
 						~dl.set(\mix, k_map);
 					});
 
+					//passing the values to the synth
 					~harmonizer.set(\amp5Up, amp5, \amp5Low, amp5);
 					~harmonizer.set(\amp7Up, amp7, \amp7Low, amp7);
 					postln("AMP 5 : " + amp5 + "  AMP 7 : " + amp7);
@@ -394,7 +378,7 @@ s.waitForBoot{
 			~harmonizer.set(\amphmidi, 1);
 
 			OSCdef('OSCreceiver',
-				{
+				{    //OSC def changing for every patch
 					arg msg;
 					var x_map, y_map, z_map, k_map, amp, amp1;
 					var high_low_mix;
@@ -402,17 +386,17 @@ s.waitForBoot{
 					var a = \db.asWarp;
 					var amph;
 
-					x = msg[1]; // x centroid  -> feedback     ->the sphere radius
-					y = msg[2];//  y  centroid -> index        ->the spere rays
-					z = msg[3];// palm length  -> LPF cut-off  ->the double squares
-					k = msg[4];// palm slope   -> Reverb amount->the square magnitude
+					x = msg[1]; // x centroid   -> number of voices
+					y = msg[2]; // y centroid   -> high-low harmonics crossfade
+					z = msg[3]; // palm length  -> harmonic voices on/off or enhance
+					k = msg[4]; // palm slope   -> effect dry/wet (reverb or delay)
 
 
-					x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
-					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-					z_map = LinLin.ar(z,0,1,0,1.5);// mapping of the cut off lpf
-					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
-
+					// mapping of OSC messages
+					x_map = LinLin.ar(x,0,1,0,2);
+					y_map = LinLin.ar(y,0,1,0,1);
+					z_map = LinLin.ar(z,0,1,0,1.5);
+					k_map = LinLin.ar(k,0,1,-1,1);
 					high_low_mix = LinLin.ar(y,0,1,-1.5,1.5);
 
 					amp5 = 0.5*x_map;
@@ -439,6 +423,7 @@ s.waitForBoot{
 						~dl.set(\mix, k_map);
 					});
 
+					//passing the values to the synth
 					~harmonizer.set(\amp5Up, amp5, \amp5Low, amp5);
 					~harmonizer.set(\amp7Up, amp7, \amp7Low, amp7);
 					postln("AMP 5 : " + amp5 + "  AMP 7 : " + amp7);
@@ -460,7 +445,7 @@ s.waitForBoot{
 			~harmonizer.set(\amphmidi, 1);
 
 			OSCdef('OSCreceiver',
-				{
+				{   //OSC def changing for every patch
 					arg msg;
 					var x_map, y_map, z_map, k_map, amp, amp1;
 					var high_low_mix;
@@ -468,17 +453,17 @@ s.waitForBoot{
 					var a = \db.asWarp;
 					var amph;
 
-					x = msg[1]; // x centroid  -> feedback     ->the sphere radius
-					y = msg[2];//  y  centroid -> index        ->the spere rays
-					z = msg[3];// palm length  -> LPF cut-off  ->the double squares
-					k = msg[4];// palm slope   -> Reverb amount->the square magnitude
+					x = msg[1]; // x centroid   -> number of voices
+					y = msg[2]; // y centroid   -> high-low harmonics crossfade
+					z = msg[3]; // palm length  -> harmonic voices on/off or enhance
+					k = msg[4]; // palm slope   -> effect dry/wet (reverb or delay)
 
 
-					x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
-					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-					z_map = LinLin.ar(z,0,1,0,1.5);// mapping of the cut off lpf
-					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
-
+					// mapping of OSC messages
+					x_map = LinLin.ar(x,0,1,0,2);
+					y_map = LinLin.ar(y,0,1,0,1);
+					z_map = LinLin.ar(z,0,1,0,1.5);
+					k_map = LinLin.ar(k,0,1,-1,1);
 					high_low_mix = LinLin.ar(y,0,1,-1.5,1.5);
 
 					amp5 = 0.5*x_map;
@@ -505,6 +490,7 @@ s.waitForBoot{
 						~dl.set(\mix, k_map);
 					});
 
+					//passing the values to the synth
 					~harmonizer.set(\amp5Up, amp5, \amp5Low, amp5);
 					~harmonizer.set(\amp7Up, amp7, \amp7Low, amp7);
 					postln("AMP 5 : " + amp5 + "  AMP 7 : " + amp7);
@@ -529,7 +515,7 @@ s.waitForBoot{
 			~harmonizer.set(\amphmidi, 1);
 
 			OSCdef('OSCreceiver',
-				{
+				{    //OSC def changing for every patch
 					arg msg;
 					var x_map, y_map, z_map, k_map, amp, amp1;
 					var high_low_mix;
@@ -537,16 +523,18 @@ s.waitForBoot{
 					var a = \db.asWarp;
 					var amph;
 
-					x = msg[1]; // x centroid  -> feedback     ->the sphere radius
-					y = msg[2];//  y  centroid -> index        ->the spere rays
-					z = msg[3];// palm length  -> LPF cut-off  ->the double squares
-					k = msg[4];// palm slope   -> Reverb amount->the square magnitude
+					x = msg[1]; // x centroid   -> number of voices
+					y = msg[2]; // y centroid   -> high-low harmonics crossfade
+					z = msg[3]; // palm length  -> harmonic voices on/off or enhance
+					k = msg[4]; // palm slope   -> effect dry/wet (reverb or delay)
 
 
-					x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
-					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-					z_map = LinLin.ar(z,0,1,0,1.5);// mapping of the cut off lpf
-					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
+					// mapping of OSC messages
+					x_map = LinLin.ar(x,0,1,0,2);
+					y_map = LinLin.ar(y,0,1,0,1);
+					z_map = LinLin.ar(z,0,1,0,1.5);
+					k_map = LinLin.ar(k,0,1,-1,1);
+
 
 					if ( z_map < 0.15, {
 						~harmonizer.set(\amph, 0);
@@ -577,17 +565,19 @@ s.waitForBoot{
 
 		///////////////////////////////////ByPass all///////////////////////
 
-		MIDIdef.noteOn(\onOff,{
+		MIDIdef.noteOn(\onOff,{ //on-ff toggle for the whole system
 			arg val, num, chan, src;
 
 			if(~onOff == 0, {
 				~onOff = 1;
 				~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut, \outFreqBus, ~fundamentalBus], ~inputGroup);
+				// instantiating the first synth starts the Handmonizer
 				postln("the Harmonizer is On!");
 			},
 			{
 				~onOff = 0;
 				~voiceTracker.free;
+				// turns off the handmonizers
 				postln("the Harmonizer is Off!");
 			});
 
@@ -595,7 +585,7 @@ s.waitForBoot{
 		},noteNum: 40);
 
 		///////////////////////////////////ByPass harmonies///////////////////////
-		MIDIdef.noteOn(\onOffHarm,{
+		MIDIdef.noteOn(\onOffHarm,{ //on-off toggle for the harmonic voices
 			arg val, num, chan, src;
 
 			if(~onOffHarm == 0, {
@@ -614,7 +604,7 @@ s.waitForBoot{
 
 		//////////////////////DELAY & REVERB PATCHES /////////////////////////
 
-		MIDIdef.noteOn(\delayPatch,{
+		MIDIdef.noteOn(\delayPatch,{ //this patch contains only delay and no harmony
 			arg val, num, chan, src;
 
 
@@ -627,16 +617,18 @@ s.waitForBoot{
 					var high_low_mix;
 					var amp5, amp7;
 
-					x = msg[1]; // x centroid  -> feedback     ->the sphere radius
-					y = msg[2];//  y  centroid -> index        ->the spere rays
-					z = msg[3];// palm length  -> LPF cut-off  ->the double squares
-					k = msg[4];// palm slope   -> Reverb amount->the square magnitude
+					x = msg[1]; // x centroid   -> number of voices
+					y = msg[2]; // y centroid   -> high-low harmonics crossfade
+					z = msg[3]; // palm length  -> harmonic voices on/off or enhance
+					k = msg[4]; // palm slope   -> effect dry/wet (reverb or delay)
 
 
-					x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
-					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-					z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
-					k_map = LinLin.ar(k,0,1,-1,1); //  mapping of the Reverb amount
+					// mapping of OSC messages
+					x_map = LinLin.ar(x,0,1,0,2);
+					y_map = LinLin.ar(y,0,1,0,1);
+					z_map = LinLin.ar(z,0,1,0,1.5);
+					k_map = LinLin.ar(k,0,1,-1,1);
+
 
 
 					if (k_map>= 0.8,{
@@ -655,7 +647,7 @@ s.waitForBoot{
 
 		},noteNum: 42);
 
-		MIDIdef.noteOn(\reverbPatch,{
+		MIDIdef.noteOn(\reverbPatch,{ //this patch contains only reverb and no harmony
 			arg val, num, chan, src;
 			postln("Reverb Patch");
 
@@ -668,16 +660,18 @@ s.waitForBoot{
 					var high_low_mix;
 					var amp5, amp7;
 
-					x = msg[1]; // x centroid  -> feedback     ->the sphere radius
-					y = msg[2];//  y  centroid -> index        ->the spere rays
-					z = msg[3];// palm length  -> LPF cut-off  ->the double squares
-					k = msg[4];// palm slope   -> Reverb amount->the square magnitude
+					x = msg[1]; // x centroid   -> number of voices
+					y = msg[2]; // y centroid   -> high-low harmonics crossfade
+					z = msg[3]; // palm length  -> harmonic voices on/off or enhance
+					k = msg[4]; // palm slope   -> effect dry/wet (reverb or delay)
 
 
-					x_map = LinLin.ar(x,0,1,0,3);// mapping the feedback
-					y_map = LinLin.ar(y,0,1,0,1); // mapping of the index (increase the modulation amplitude)
-					z_map = LinLin.ar(z,0,1,0,2);// mapping of the cut off lpf
-					k_map = LinLin.ar(k,0,1,-1,0); //  mapping of the Reverb amount
+					// mapping of OSC messages
+					x_map = LinLin.ar(x,0,1,0,2);
+					y_map = LinLin.ar(y,0,1,0,1);
+					z_map = LinLin.ar(z,0,1,0,1.5);
+					k_map = LinLin.ar(k,0,1,-1,1);
+
 
 
 					if( k_map < -0.8,
@@ -700,6 +694,8 @@ s.waitForBoot{
 
 	/////////////////////////////////////////////////////////////////////////GUI//////////////////////////////////////////////////////////////////////
 	{
+		//This section includes a simple GUI to run the Handmonizer in case the user does not have a MIDI controller to turn it on and off
+
 		postln("GUI section status: RUNNING.");
 		Window.closeAll;
 		w = Window.new("gui", Rect.new(200,500, 500, 200)).front.alwaysOnTop_(true);
@@ -759,9 +755,11 @@ s.waitForBoot{
 
 			if (view.value == 1, {
 				~voiceTracker = Synth.new(\voiceTracker, [\outputBus,  ~trackerOut, \outFreqBus, ~fundamentalBus], ~inputGroup);
+				// instantiating the first synth starts the Handmonizer
 				postln("the Harmonizer is On!");
 			},{
 				~voiceTracker.free;
+				// turns of the Handmonizer
 				postln("the Harmonizer is Off!");
 			});
 
@@ -786,15 +784,6 @@ s.waitForBoot{
 			~voiceTracker.free;
 		});
 
-
-
-		/*
-		~sc = PopUpMenu(w, Rect(10, 10, 100, 30));
-		~sc.items = ['Major', 'Minor'];
-		~sc.action_({
-		~scale = ~sc.value;
-		postln(~scale);
-		}); */
 	}.defer(10);
 
 }
