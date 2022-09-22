@@ -5,7 +5,7 @@
 
 
 We are proud to present the implementation of the Handmonizer, an unsual artist oriented harmonizer tailored on the needs of a specific artist. The handmonizer is  vocal harmonizer which changes its behaviour using hand motion recognition. The user can change the harmonic patterns of the harmonizer by simply moving their hand in front of a webcam while singing. In addition to that, they can switch between different patches using a MIDI controller to create different harmonic voices. 
-In Addition, we implement a second version where the user can set a specific scale and the harmonization will stay inside that scale. In this case, the hand motion interaction is the same, however the MIDI controller can only be used to control some parameters with the knobs, without changing between patches.
+In Addition, we implement a second version where the user can set a specific scale and the harmonization will stay inside that scale.
 In the last workshop, the artist tried to merge the Handmonizer with her current setup. You can watch a [short demo video](https://drive.google.com/file/d/1UsGnPmJvErldBg71jrULoDFW9Uel0gET/view?usp=sharing) or read the full [scientific paper](https://github.com/EllDy96/Handmonizer/blob/main/Report/Project%20Course%20L28%20Report.pdf).
 
 # How to use
