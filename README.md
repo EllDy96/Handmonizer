@@ -98,4 +98,4 @@ Finally, we defined an evaluation strategy for artist-oriented tool like that, c
 The authors would like to thank everyone involved in this project. First of all, the singer Maria Pia De Vito for her availability, her kindness and her positivity in introducing some novelty in her performance. A special thanks to Augusto Sarti for creating and organizing this brilliant team. Luca Comanducci for his constant feedback concerning the implementation and report writing. Special thanks to the two professors from Goldsmiths University of London. Mark D'Inverno for his insight concerning the evaluation procedure and Mathew Yee King for his availability and valuable SuperCollider support.
 
 # Authors
-Antonios Pappas, Davide Lionetti
+ Davide Lionetti, Antonios Pappas
