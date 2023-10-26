@@ -40,7 +40,10 @@ We retrieve the two coordinates of the centroid in the screen \(x_c, y_c\) and w
 The palm length is used to implement two gestures. The user could  close the hand to fade out the harmonics or we could move the hand further or closer to the screen to modified the volumes of the harmonized voices. In that way we are able to also map the z-position of the hand in the space.
 The palm slope controls the amount of effect (Reverb or Delay) that the user wants to add to the voice, as a dry-wet knob; when the white line is perpendicular to the bottom border the voice has no effect, while it reaches its maximum value when the line is parallel to the lower border. 
 
-## Harmonizer 
+## Sound processing 
+<p align="center">
+  <img src="https://github.com/EllDy96/Handmonizer/blob/main/Report/image.png" width="65%" height="65%" >
+</p>
 
 The audio signal processing part of the Handmonizer is developed entirely on SuperCollider. The algorithm of the harmonizer is composed of separate pieces of code, including pitch tracking and shifting, effects and communication protocol definitions (OSC, MIDI) for parameter mapping. Here we explain each component separately.
 
