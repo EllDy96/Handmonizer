@@ -6,7 +6,7 @@
 
 We are proud to present the implementation of the Handmonizer, an unsual artist oriented harmonizer tailored on the needs of a specific artist. The handmonizer is a vocal harmonizer that interacts with the user through a hand gesture recognition network. The user can change the harmonic patterns of the harmonizer by simply moving his/her hand in front of a webcam while singing. In addition, the user can switch between different patches using a MIDI controller to create different harmonic pattern. 
 We implement also a second version in which the user can set a specific scale and the harmonization will stay inside that scale.
-You can watch a [short video demostration](https://drive.google.com/file/d/1UsGnPmJvErldBg71jrULoDFW9Uel0gET/view?usp=sharing) of the last workshop in which the artist tried to merge the Handmonizer with her current setup, or read the full [scientific paper](https://github.com/EllDy96/Handmonizer/blob/main/Report/handMonizer_paper_IS2_2023.pdf) presented at the 4th Symposium of the Internet Of Sound in Pisa. 
+You can watch a [short video demostration](https://drive.google.com/file/d/1UsGnPmJvErldBg71jrULoDFW9Uel0gET/view?usp=sharing) of the last workshop in which the artist tried to merge the Handmonizer with her current setup, or read the full [scientific paper](https://github.com/EllDy96/Handmonizer/blob/main/Report/handMonizer_paper_IS2_2023.pdf) **presented at the 4th Symposium of the Internet Of Sound in Pisa**. 
 
 # How to use
 To run the SuperCollider code you need to include the two classes cointained in [External Classes](https://github.com/EllDy96/Handmonizer/tree/main/SupercolliderCode/External%20classes) folder into the  SuperCollider external library folder on your computer.
