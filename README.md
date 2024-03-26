@@ -4,17 +4,17 @@
 </p>
 
 
-We are proud to present the implementation of the Handmonizer, an unsual artist oriented harmonizer tailored on the needs of a specific artist. The handmonizer is a vocal harmonizer that interacts with the user through a hand gesture recognition network. The user can change the harmonic patterns of the harmonizer by simply moving his/her hand in front of a webcam while singing. In addition, the user can switch between different patches using a MIDI controller to create different harmonic pattern. 
-We implement also a second version in which the user can set a specific scale and the harmonization will stay inside that scale.
-You can watch a [short video demostration](https://drive.google.com/file/d/1UsGnPmJvErldBg71jrULoDFW9Uel0gET/view?usp=sharing) of the last workshop in which the artist tried to merge the Handmonizer with her current setup, or read the full [scientific paper](https://github.com/EllDy96/Handmonizer/blob/main/Report/handMonizer_paper_IS2_2023.pdf) **presented at the 4th Symposium of the Internet Of Sound in Pisa**. 
+We are proud to present the implementation of the Handmonizer, an unusual artist-oriented harmonizer tailored to the needs of a specific artist. The handmonizer is a vocal harmonizer that interacts with the user through a hand gesture recognition network. The user can change the harmonic patterns of the harmonizer by simply moving his/her hand in front of a webcam while singing. In addition, the user can switch between different patches using a MIDI controller to create different harmonic patterns. 
+We also implement a second version in which the user can set a specific scale and the harmonization will stay inside that scale.
+You can watch a [short video demonstration](https://drive.google.com/file/d/1UsGnPmJvErldBg71jrULoDFW9Uel0gET/view?usp=sharing) of the last workshop in which the artist tried to merge the Handmonizer with her current setup or read the full [scientific paper](https://ieeexplore.ieee.org/document/10335445) **presented at the 4th Symposium of the Internet Of Sound in Pisa**. 
 
 # How to use
-To run the SuperCollider code you need to include the two classes cointained in [External Classes](https://github.com/EllDy96/Handmonizer/tree/main/SupercolliderCode/External%20classes) folder into the  SuperCollider external library folder on your computer.
+To run the SuperCollider code you need to include the two classes contained in [External Classes](https://github.com/EllDy96/Handmonizer/tree/main/SupercolliderCode/External%20classes) folder into the  SuperCollider external library folder on your computer.
 Then you should install the PitchShiftPA class by simply typing and running *Quarks.gui* on SuperCollider. A window with all the available quarks will appear, where you find and install PitchShiftPA.
 
 To run the hand motion recognition web application you need to have [node.js](https://nodejs.org/en/download/) installed on your computer.
 
-In order to use the application you need a webcam and microphone. Clone the repository and inside the Interaction folder run the server using Node.js with the command `node .\server.js` from the PoweShell terminal. Then connect to the url `localhost:55123` in a browser (it may take some seconds to load the ML model). Open Hanmonizer.scd (or scale_handmonizer.scd) in SuperColliderCode folder and run the code following the instructions in the comments.
+To use the application you need a webcam and microphone. Clone the repository and inside the Interaction folder run the server using Node.js with the command `node .\server.js` from the PoweShell terminal. Then connect to the URL `localhost:55123` in a browser (it may take some seconds to load the ML model). Open Hanmonizer.scd (or scale_handmonizer.scd) in SuperColliderCode folder and run the code following the instructions in the comments.
 
 # Handmonizer Implementation
 
